@@ -38,7 +38,7 @@ window.PROJECT_CONFIG = {
   },
 
   links: {
-    siteUrl: "https://right_c.gitee.io/yanjiao-ich-archive/",
+    siteUrl: "https://rightc.github.io/yanjiao-ich-archive/",
     documentaryUrl: "https://your-video-link.com",
     reportAbstractPage: "abstract.html",
     feedbackForm: ""
