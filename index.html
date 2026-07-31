@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="三河景泰蓝田野档案：逛工序、打卡点位、玩掐丝、生成海报" />
+
+  <meta property="og:title" content="燕郊非遗田野档案 · 景泰蓝" />
+  <meta property="og:description" content="工序见匠心，一器载山河——走进三河景泰蓝" />
+  <meta property="og:image" content="https://your-domain.com/images/share-cover.jpg" />
+  <meta property="og:type" content="website" />
+
+  <title>燕郊非遗田野档案</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css?v=2.2.38" />
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <div class="bg-orb orb1" data-parallax="0.04"></div>
+  <div class="bg-orb orb2" data-parallax="-0.03"></div>
+  <div class="bg-orb orb3" data-parallax="0.05"></div>
+
+  <button type="button" class="bgm-toggle" id="bgmToggle" aria-pressed="true" aria-label="配乐开关">
+    <span class="bgm-icon" aria-hidden="true">♪</span>
+    <span class="bgm-label">配乐</span>
+  </button>
+
+  <!-- 01 封面 -->
+  <section class="screen hero" id="home">
+    <div class="wrap reveal">
+      <div class="seal"></div>
+      <div class="eyebrow"><span class="dot"></span>2026 暑期社会实践 · 田野档案</div>
+      <h1 class="title-xl" data-config="meta.title">燕郊非遗田野档案</h1>
+      <p class="lead">
+        <span data-config="meta.subtitle">景泰蓝田野档案</span><br>
+        <span data-config="meta.tagline">从工序到传承，看见非遗如何被理解与参与</span>
+      </p>
+      <div class="cta-row cta-hero">
+        <a class="btn btn-primary btn-lg" href="#intro">进入完整档案</a>
+      </div>
+      <div class="cta-row">
+        <a class="btn btn-secondary" href="#cloisonne">逛工序</a>
+        <a class="btn btn-secondary" href="#play">玩掐丝</a>
+        <a class="btn btn-secondary" href="#passportCard">集印章</a>
+      </div>
+      <div class="metrics metrics-top">
+        <div class="metric"><strong data-count="2" data-config="stats.observeCount">2</strong><span>次观察</span></div>
+        <div class="metric"><strong data-count="9" data-config="stats.interviewCount">9</strong><span>人访谈</span></div>
+        <div class="metric"><strong data-count="1" data-config="stats.routeCount">1</strong><span>条线路</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 简介 -->
+  <section class="screen" id="intro">
+    <div class="wrap reveal">
+      <div class="eyebrow"><span class="dot"></span>项目简介</div>
+      <h2 class="title-lg">我们为什么来到燕郊？</h2>
+      <p class="lead">许多非遗并不缺知名度，缺的是理解与参与。</p>
+      <div class="glass card">
+        <h3>调研缘起</h3>
+        <p>景泰蓝作为承载中式美学与外交文化的本土非遗，拥有深厚的地域传承脉络，却长期少有人深入了解其真实发展现状。为全面摸清三河景泰蓝技艺的传承现状、现存发展难题，探寻非遗活态发展可行路径，我们开展本次田野调查。</p>
+      </div>
+
+      <div class="glass card" id="core-problems">
+        <h3>核心问题 <span class="hint-inline">点标题展开</span></h3>
+        <ol class="problem-list accordion" id="problemAccordion">
+          <li class="acc-item">
+            <button type="button" class="acc-trigger" aria-expanded="false"><h4>一、人才传承断层</h4></button>
+            <div class="acc-panel"><p>匠人普遍老龄化，顶尖老手艺人数量稀少；技艺学习周期久、劳作辛苦，学徒收入低、福利差，年轻人入行意愿低。传统师徒模式式微，高校人才培养重理论轻实践，后备人才供给不足。</p></div>
+          </li>
+          <li class="acc-item">
+            <button type="button" class="acc-trigger" aria-expanded="false"><h4>二、生产经营成本居高不下</h4></button>
+            <div class="acc-panel"><p>优质珐琅釉料依靠进口，原材料逐年涨价；多次入窑烧制报废率高，能耗与物料损耗大。纯手工制作耗时久，无法规模化生产，小微工坊利润微薄。</p></div>
+          </li>
+          <li class="acc-item">
+            <button type="button" class="acc-trigger" aria-expanded="false"><h4>三、市场生态乱象丛生</h4></button>
+            <div class="acc-panel"><p>机器低价仿品大量充斥市场，拉低手工景泰蓝整体价值；产品以传统大件摆件为主，日用文创品类匮乏，设计不符合当代审美。从业者多为小作坊模式，缺少品牌运营能力，原创设计抄袭泛滥。</p></div>
+          </li>
+          <li class="acc-item">
+            <button type="button" class="acc-trigger" aria-expanded="false"><h4>四、技艺留存与大众普及度不足</h4></button>
+            <div class="acc-panel"><p>烧制火候、釉料配比等核心经验依靠口传心授，缺少文字影像存档，技艺易失传；部分商家简化核心工序，正统工艺标准被弱化。大众仅知晓其国礼身份，对工艺内涵了解甚少，年轻群体认知度偏低。</p></div>
+          </li>
+          <li class="acc-item">
+            <button type="button" class="acc-trigger" aria-expanded="false"><h4>五、政策与产业配套有短板</h4></button>
+            <div class="acc-panel"><p>小型工坊资金周转压力大，专项扶持资金多向大厂、名家倾斜，民间作坊支持力度不够。行业缺少匠人、文创设计师、市场运营复合型人才，技艺转化与市场推广衔接断裂。</p></div>
+          </li>
+          <li class="acc-item">
+            <button type="button" class="acc-trigger" aria-expanded="false"><h4>六、环保与经营场地约束较强</h4></button>
+            <div class="acc-panel"><p>烧制、镀金工序存在污染物排放，环保管控收紧；城区经营场地租金高昂，老旧作坊设备安放受限，不少小作坊被迫停业。</p></div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="glass card">
+        <h3>调研方法</h3>
+        <ol class="problem-list">
+          <li>
+            <h4>文献研究法</h4>
+            <p>查阅景泰蓝工艺资料、行业报告及非遗文献，梳理技艺特点与行业问题，为调研提供理论依据。</p>
+          </li>
+          <li>
+            <h4>实地观察法</h4>
+            <p>走访非遗工坊、文创展厅，实地考察景泰蓝生产工艺、传承现状与经营难题。</p>
+          </li>
+          <li>
+            <h4>归纳总结法</h4>
+            <p>整合文献与实地调研内容，分类梳理行业现存问题，汇总得出调研结论。</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="glass card">
+        <h3>团队信息</h3>
+        <p data-config="meta.teamName">「畿辅文薪·匠心永续」数字化调研实践团</p>
+        <p>指导教师：<span data-config="meta.advisor">赵鹏凯</span></p>
+        <p>调研时间：<span data-config="meta.surveyTime">2026年7月16日至19日</span></p>
+        <p>调研地点：<span data-config="meta.surveyPlace">河北省廊坊市三河市</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 地图 -->
+  <section class="screen" id="map">
+    <div class="wrap reveal">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>田野地图</div>
+          <h2 class="title-lg">调研路线</h2>
+        </div>
+        <div class="section-num">01</div>
+      </div>
+      <p class="lead">点一点位，看看能去哪、能体验什么。</p>
+
+      <div class="map-card map-card-real">
+        <div id="realMap" class="real-map" role="application" aria-label="调研点位真实地图"></div>
+        <p class="map-fallback muted-text" id="mapFallback" hidden>地图加载失败时，仍可点击下方点位查看详情与导航。</p>
+      </div>
+
+      <div class="glass card" id="placeList">
+        <h3>调研点位</h3>
+        <p class="muted-text place-hint">点击地图标记或下方条目，查看详情与导航</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 景泰蓝 -->
+  <section class="screen theme-blue" id="cloisonne">
+    <div class="wrap reveal">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>案例一</div>
+          <h2 class="title-lg">景泰蓝</h2>
+        </div>
+        <div class="section-num">02</div>
+      </div>
+      <p class="lead" data-config="cases.cloisonne.subtitle">工序见匠心，一器载山河</p>
+
+      <div class="chapter-bar" id="chapterBar" aria-label="工序章节"></div>
+      <p class="chapter-tip" id="chapterTip">点上方工序，将在同一支视频内跳到对应阶段</p>
+
+      <div class="media">
+        <!-- 单视频 + 章节 seek；preload=metadata 避免首屏拉满整片 -->
+        <video id="processVideo" controls playsinline preload="metadata"
+               data-config-poster="media.cloisonnePoster"
+               poster="images/cloisonne-poster.jpg">
+          <source data-config-src="media.cloisonneVideo" src="videos/cloisonne-process.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div class="gallery-head">
+        <h3>现场印象</h3>
+        <span class="muted-text">左右滑动</span>
+      </div>
+      <div class="gallery" id="gallery" tabindex="0"></div>
+
+      <div class="chips">
+        <span class="chip">铜胎掐丝珐琅</span>
+        <span class="chip">工序可见</span>
+        <span class="chip">学习门槛高</span>
+      </div>
+
+      <div class="glass card" id="cloisonne-intro">
+        <h3>景泰蓝的介绍</h3>
+        <p>景泰蓝，中国的著名特种金属工艺品类之一，到明代景泰年间这种工艺技术制作达到了最巅峰，制作出的工艺品最为精美而著名，故后人称这种金属器为 “景泰蓝”。景泰蓝正名 “铜胎掐丝珐琅”，俗名 “珐蓝”，又称 “嵌珐琅”，是一种在铜质的胎型上，用柔软的扁铜丝，掐成各种花纹焊上，然后把珐琅质的色釉填充在花纹内烧制而成的器物。因其在明朝景泰年间盛行，制作技艺比较成熟，使用的珐琅釉多以蓝色为主，故而得名 “景泰蓝”。</p>
+        <ul class="problem-list intro-meta">
+          <li>
+            <h4>完整工序汇总</h4>
+            <p>设计、制胎、掐丝、粘丝、点蓝、烧蓝、打磨、抛光、镀金</p>
+          </li>
+          <li>
+            <h4>辅料原料</h4>
+            <p>紫铜、天然矿物釉、黄铜丝、白芨、黄金等</p>
+          </li>
+        </ul>
+        <p>全流程以纯手工为主，机器仅辅助基础裁切，核心纹样、填色、烧制全靠匠人经验把控。</p>
+      </div>
+
+      <div class="glass card">
+        <h3>核心工序</h3>
+        <div class="timeline" id="processTimeline">
+          <div class="step" data-step="tai"><h4>制胎</h4><p>景泰蓝制作第一步即为制胎，采用延展性好的紫铜板材，依照设计造型，经裁剪、捶打、拼接、焊接成型，反复修正器型弧度，最终锻造出规整铜胎基底。</p></div>
+          <div class="step" data-step="qiasi"><h4>掐丝</h4><p>将扁平黄铜丝依照画稿纹样弯折、掐出造型，蘸白芨胶固定粘贴于铜胎表面，所有图案轮廓全部由手工掐丝勾勒完成，是景泰蓝线条美感的核心工序。</p></div>
+          <div class="step" data-step="dianlan"><h4>点蓝</h4><p>以天然矿物研磨成各色釉料，用吸蓝管填入掐丝形成的凹槽内，分遍填色、干湿分层，保证色彩饱满均匀，一件器物需反复点填多遍。</p></div>
+          <div class="step" data-step="shaolan"><h4>烧蓝</h4><p>填完釉料的铜胎送入高温熔炉煅烧，釉料遇热熔固，冷却后釉面会凹陷，因此点蓝、烧蓝工序需要反复循环 4-8 次，直至釉面与铜丝齐平。</p></div>
+          <div class="step" data-step="mouguang"><h4>磨光</h4><p>多道烧制完成后，先用粗砂石、细砂石打磨，再用木炭、水磨反复抛光，磨平釉料与铜丝高低差，让器身顺滑光亮，显露完整花纹。</p></div>
+          <div class="step" data-step="dujin"><h4>镀金</h4><p>打磨完成的半成品放入镀金槽，通过电解镀金工艺，在外露铜丝表面镀上纯金，隔绝氧化，同时让器物拥有华贵金属光泽，是成品收尾关键工序。</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 互动体验 -->
+  <section class="screen theme-blue" id="play">
+    <div class="wrap reveal">
+      <div class="eyebrow"><span class="dot"></span>动手试试</div>
+      <h2 class="title-lg">掐丝小体验</h2>
+      <p class="lead">用手指沿虚线走一圈，感受线条如何成为纹样。</p>
+
+      <div class="glass card game-card">
+        <div class="game-meta">
+          <span>完成度 <strong id="gameProgress">0%</strong></span>
+          <button type="button" class="btn btn-secondary btn-sm" id="gameReset">重来</button>
+        </div>
+        <p class="pattern-label">选择花纹</p>
+        <div class="pattern-bar" id="patternBar" role="tablist" aria-label="掐丝花纹选择"></div>
+        <svg id="filigreeGame" class="filigree-svg" viewBox="0 0 320 280" role="img" aria-label="掐丝描线小游戏">
+          <defs>
+            <linearGradient id="wireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fde68a"/>
+              <stop offset="100%" stop-color="#d4af37"/>
+            </linearGradient>
+            <radialGradient id="vaseGlow" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="rgba(37,99,235,0.28)"/>
+              <stop offset="100%" stop-color="rgba(15,23,42,0)"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="160" cy="148" rx="108" ry="118" fill="url(#vaseGlow)"/>
+          <g id="patternDecor" fill="none" stroke="rgba(147,197,253,0.12)" stroke-width="1"></g>
+          <path id="guidePath" fill="none" stroke="rgba(226,232,240,0.38)" stroke-width="2.4" stroke-dasharray="5 5" stroke-linecap="round" d=""/>
+          <path id="drawPath" d="" fill="none" stroke="url(#wireGrad)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="game-tip" id="gameTip">先选一种花纹，再按住拖动描线</p>
+        <p class="game-unlock" id="gameUnlock" hidden>解锁：掐丝是景泰蓝线条美感的核心——每一根铜丝，都是手工弯折固定。</p>
+      </div>
+
+      <div class="glass card card-gap-top game-card" id="enamelCard">
+        <div class="game-meta">
+          <span>点蓝进度 <strong id="enamelProgress">0/6</strong></span>
+          <button type="button" class="btn btn-secondary btn-sm" id="enamelReset">清空</button>
+        </div>
+        <h3>点蓝填色</h3>
+        <p class="muted-text">选掐丝纹样与釉色，再点纹格——先湿后干，釉面带凹感高光。</p>
+        <p class="pattern-label">选择掐丝纹样</p>
+        <div class="pattern-bar" id="enamelPatternBar" role="tablist" aria-label="点蓝纹样选择"></div>
+        <div class="enamel-palette" id="enamelPalette" role="listbox" aria-label="釉色选择"></div>
+        <p class="enamel-swatch-tip" id="enamelSwatchTip" aria-live="polite">当前釉色：宝蓝</p>
+        <svg id="enamelGame" class="enamel-svg" viewBox="0 0 320 260" role="img" aria-label="点蓝填色小游戏">
+          <defs id="enamelDefs">
+            <linearGradient id="enamelWire" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fde68a"/>
+              <stop offset="100%" stop-color="#d4af37"/>
+            </linearGradient>
+            <filter id="enamelInset" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
+              <feOffset dx="0" dy="1" result="off"/>
+              <feComposite in="off" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="inner"/>
+              <feFlood flood-color="#000" flood-opacity="0.35" result="color"/>
+              <feComposite in="color" in2="inner" operator="in" result="shadow"/>
+              <feMerge>
+                <feMergeNode in="SourceGraphic"/>
+                <feMergeNode in="shadow"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <rect x="24" y="24" width="272" height="212" rx="18" fill="rgba(15,23,42,0.55)" stroke="rgba(253,230,138,0.35)" stroke-width="1.5"/>
+          <g id="enamelFills"></g>
+          <g id="enamelGloss" pointer-events="none"></g>
+          <g id="enamelWires" fill="none" stroke="url(#enamelWire)" stroke-width="2.2" stroke-linejoin="round"></g>
+          <g id="enamelHits" fill="transparent" stroke="none"></g>
+        </svg>
+        <p class="game-tip" id="enamelTip">先选釉色，再点纹格：第一次为湿釉，再点同色或稍候变干</p>
+        <p class="game-unlock" id="enamelUnlock" hidden>解锁：点蓝需分遍填色，干湿分层差一分就可能串色。</p>
+      </div>
+
+      <div class="glass card card-gap-top game-card" id="fireCard">
+        <div class="game-meta">
+          <span>烧蓝火候 · <strong id="fireTempLabel">待烧</strong></span>
+          <button type="button" class="btn btn-secondary btn-sm" id="fireReset">重来</button>
+        </div>
+        <h3>烧蓝火候</h3>
+        <p class="muted-text">拖动滑块设定窑温（区间刻度见下），点「入窑烧制」后才揭晓釉色效果。</p>
+        <div class="fire-kiln" id="fireKiln" data-state="preview" data-zone="pending" aria-live="polite" style="--fire-col-under:28.89%;--fire-col-slight-low:15.56%;--fire-col-ideal:22.22%;--fire-col-slight-high:15.56%;--fire-col-over:17.78%;">
+          <div class="fire-flare" aria-hidden="true"></div>
+          <div class="fire-vessel is-pending" id="fireVessel" role="img" aria-label="景泰蓝瓶釉面">
+            <svg class="fire-ware-svg" viewBox="0 0 100 158" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="fireBodyMetal" x1="18%" y1="8%" x2="88%" y2="92%">
+                  <stop offset="0%" stop-color="#3d4f6a"/>
+                  <stop offset="42%" stop-color="#1a2740"/>
+                  <stop offset="100%" stop-color="#0b1220"/>
+                </linearGradient>
+                <linearGradient id="fireGlazeDefault" x1="30%" y1="12%" x2="70%" y2="95%">
+                  <stop offset="0%" stop-color="rgba(56,189,248,0.72)"/>
+                  <stop offset="48%" stop-color="rgba(29,78,216,0.86)"/>
+                  <stop offset="100%" stop-color="rgba(30,58,138,0.94)"/>
+                </linearGradient>
+                <linearGradient id="fireGlazeUnder" x1="30%" y1="12%" x2="70%" y2="95%">
+                  <stop offset="0%" stop-color="rgba(71,85,105,0.82)"/>
+                  <stop offset="50%" stop-color="rgba(51,65,85,0.9)"/>
+                  <stop offset="100%" stop-color="rgba(30,41,59,0.96)"/>
+                </linearGradient>
+                <linearGradient id="fireGlazeIdeal" x1="28%" y1="8%" x2="72%" y2="96%">
+                  <stop offset="0%" stop-color="rgba(125,211,252,0.92)"/>
+                  <stop offset="42%" stop-color="rgba(37,99,235,0.9)"/>
+                  <stop offset="100%" stop-color="rgba(30,64,175,0.96)"/>
+                </linearGradient>
+                <linearGradient id="fireGlazeSlight" x1="28%" y1="10%" x2="72%" y2="95%">
+                  <stop offset="0%" stop-color="rgba(125,211,252,0.62)"/>
+                  <stop offset="45%" stop-color="rgba(59,130,246,0.7)"/>
+                  <stop offset="100%" stop-color="rgba(51,65,85,0.88)"/>
+                </linearGradient>
+                <linearGradient id="fireGlazeOver" x1="28%" y1="8%" x2="72%" y2="96%">
+                  <stop offset="0%" stop-color="rgba(254,243,199,0.88)"/>
+                  <stop offset="40%" stop-color="rgba(248,113,113,0.78)"/>
+                  <stop offset="100%" stop-color="rgba(127,29,29,0.9)"/>
+                </linearGradient>
+                <linearGradient id="fireSheenGrad" x1="20%" y1="15%" x2="80%" y2="90%">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.72)"/>
+                  <stop offset="45%" stop-color="rgba(255,255,255,0.18)"/>
+                  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient>
+                <linearGradient id="fireGoldWire" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fde68a"/>
+                  <stop offset="45%" stop-color="#d4af37"/>
+                  <stop offset="100%" stop-color="#a16207"/>
+                </linearGradient>
+                <filter id="fireGoldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0.5" stdDeviation="0.8" flood-color="#fbbf24" flood-opacity="0.45"/>
+                </filter>
+                <clipPath id="fireGlazeClip">
+                  <!-- 整瓶可见瓶身：盘口 → 细颈 → 肩 → 鼓腹 → 圈足（与铜胎同形，金掐丝叠在釉上） -->
+                  <path d="M32.5 8.5 H67.5 C72 8.5 73 12 71.5 14.8 L68.2 19.2 C63.5 25 59.8 30.5 57.2 39 L55 49 C54.2 55 57.8 60.5 64.5 67.5 C78.5 79 88 94 86.2 112.5 C84.8 128.5 72.2 138 58 142.2 V148.2 C58 151.2 42 151.2 42 148.2 V142.2 C27.8 138 15.2 128.5 13.8 112.5 C12 94 21.5 79 35.5 67.5 C42.2 60.5 45.8 55 45 49 L42.8 39 C40.2 30.5 36.5 25 31.8 19.2 L28.5 14.8 C27 12 28 8.5 32.5 8.5 Z"/>
+                </clipPath>
+              </defs>
+              <ellipse class="fire-ware-shadow" cx="50" cy="152.5" rx="27" ry="3.8"/>
+              <!-- 铜胎瓶形：盘口 · 细颈 · 瓶肩 · 鼓腹 · 圈足 -->
+              <path class="fire-ware-body" fill="url(#fireBodyMetal)" d="M32.5 8.5 H67.5 C72 8.5 73 12 71.5 14.8 L68.2 19.2 C63.5 25 59.8 30.5 57.2 39 L55 49 C54.2 55 57.8 60.5 64.5 67.5 C78.5 79 88 94 86.2 112.5 C84.8 128.5 72.2 138 58 142.2 V148.2 C58 151.2 42 151.2 42 148.2 V142.2 C27.8 138 15.2 128.5 13.8 112.5 C12 94 21.5 79 35.5 67.5 C42.2 60.5 45.8 55 45 49 L42.8 39 C40.2 30.5 36.5 25 31.8 19.2 L28.5 14.8 C27 12 28 8.5 32.5 8.5 Z"/>
+              <g clip-path="url(#fireGlazeClip)">
+                <rect class="fire-glaze" x="8" y="6" width="84" height="148" fill="url(#fireGlazeDefault)"/>
+                <ellipse class="fire-sheen" cx="39" cy="78" rx="14" ry="42" fill="url(#fireSheenGrad)" transform="rotate(-15 39 78)"/>
+                <g class="fire-crack" fill="none" stroke-linecap="round">
+                  <!-- 颈 -->
+                  <path d="M42 18 L48 36 L44 52" stroke="rgba(254,243,199,0.7)" stroke-width="0.85"/>
+                  <path d="M56 20 L52 34 L58 48" stroke="rgba(253,230,138,0.72)" stroke-width="0.8"/>
+                  <path d="M46 22 L50 40" stroke="rgba(255,255,255,0.5)" stroke-width="0.7"/>
+                  <!-- 肩 -->
+                  <path d="M28 42 L47 74 L41 92 L54 108" stroke="rgba(254,243,199,0.95)" stroke-width="1.15"/>
+                  <path d="M60 48 L53 82 L64 100" stroke="rgba(248,113,113,0.88)" stroke-width="1"/>
+                  <path d="M34 56 L42 68 L38 80" stroke="rgba(253,230,138,0.8)" stroke-width="0.85"/>
+                  <path d="M68 62 L58 76 L66 90" stroke="rgba(254,243,199,0.78)" stroke-width="0.9"/>
+                  <!-- 腹 -->
+                  <path d="M36 104 L49 118 L45 136" stroke="rgba(253,230,138,0.75)" stroke-width="0.9"/>
+                  <path d="M62 112 L49 130" stroke="rgba(255,255,255,0.55)" stroke-width="0.8"/>
+                  <path d="M24 88 L36 102 L30 118" stroke="rgba(248,113,113,0.82)" stroke-width="0.95"/>
+                  <path d="M74 92 L62 108 L70 124" stroke="rgba(254,243,199,0.85)" stroke-width="1"/>
+                  <path d="M48 96 L52 114 L46 128" stroke="rgba(255,255,255,0.58)" stroke-width="0.75"/>
+                  <path d="M40 120 L56 128 L52 140" stroke="rgba(253,230,138,0.7)" stroke-width="0.85"/>
+                </g>
+              </g>
+              <!-- 金掐丝轮廓 + 盘口双线 + 圈足 -->
+              <path class="fire-ware-wire" fill="none" stroke="url(#fireGoldWire)" stroke-width="2.2" stroke-linejoin="round" filter="url(#fireGoldGlow)" d="M32.5 8.5 H67.5 C72 8.5 73 12 71.5 14.8 L68.2 19.2 C63.5 25 59.8 30.5 57.2 39 L55 49 C54.2 55 57.8 60.5 64.5 67.5 C78.5 79 88 94 86.2 112.5 C84.8 128.5 72.2 138 58 142.2 V148.2 C58 151.2 42 151.2 42 148.2 V142.2 C27.8 138 15.2 128.5 13.8 112.5 C12 94 21.5 79 35.5 67.5 C42.2 60.5 45.8 55 45 49 L42.8 39 C40.2 30.5 36.5 25 31.8 19.2 L28.5 14.8 C27 12 28 8.5 32.5 8.5 Z"/>
+              <ellipse class="fire-rim" cx="50" cy="10" rx="18" ry="3.4" fill="none" stroke="url(#fireGoldWire)" stroke-width="1.65"/>
+              <ellipse class="fire-rim fire-rim--inner" cx="50" cy="12.6" rx="12.8" ry="2.3" fill="none" stroke="url(#fireGoldWire)" stroke-width="1.05" opacity="0.88"/>
+              <path class="fire-foot" fill="none" stroke="url(#fireGoldWire)" stroke-width="1.55" d="M42 142.2 H58 M39.5 148.2 H60.5"/>
+              <g class="fire-ware-filigree" fill="none" stroke="url(#fireGoldWire)" stroke-width="0.78" opacity="0.58" stroke-linejoin="round">
+                <path d="M50 60 C41.5 70 37 85 38.5 100 C39.8 116 45.5 127 50 132.5 C54.5 127 60.2 116 61.5 100 C63 85 58.5 70 50 60 Z"/>
+                <path d="M50 74 C45.5 83 43.5 94 44.5 105"/>
+                <path d="M50 74 C54.5 83 56.5 94 55.5 105"/>
+              </g>
+            </svg>
+          </div>
+          <p class="fire-zone-hint" id="fireZoneHint">入窑烧制后才见釉色</p>
+          <div class="fire-zone-bar" aria-hidden="true">
+            <span class="fire-zone under"><em>欠火</em><small>&lt;680</small></span>
+            <span class="fire-zone slight-low"><em>瑕疵</em><small>700↑</small></span>
+            <span class="fire-zone ideal"><em>合适</em><small>750–850</small></span>
+            <span class="fire-zone slight-high"><em>瑕疵</em><small>850↑</small></span>
+            <span class="fire-zone over"><em>过火</em><small>&gt;920</small></span>
+          </div>
+          <div class="fire-track-wrap">
+            <div class="fire-track" aria-hidden="true">
+              <span class="fire-track-seg under"></span>
+              <span class="fire-track-seg slight-low"></span>
+              <span class="fire-track-seg ideal"></span>
+              <span class="fire-track-seg slight-high"></span>
+              <span class="fire-track-seg over"></span>
+            </div>
+            <input type="range" min="550" max="1000" value="800" step="1" id="fireSlider" class="fire-slider" aria-label="烧蓝火候滑块" />
+          </div>
+          <p class="fire-readout"><span id="fireValue">800</span>℃</p>
+        </div>
+        <p class="game-tip" id="fireTip" data-result="">调节火候，点「入窑烧制」后才揭晓釉色</p>
+        <button type="button" class="btn btn-primary btn-full" id="fireBake">入窑烧制</button>
+        <p class="game-unlock" id="fireUnlock" hidden>解锁：点蓝与烧蓝要循环多遍，火候全凭经验。</p>
+      </div>
+
+      <div class="glass card card-gap-top game-card" id="puzzleCard">
+        <div class="game-meta">
+          <span>工序拼图 <strong id="puzzleProgress">0/6</strong></span>
+          <button type="button" class="btn btn-secondary btn-sm" id="puzzleReset">打乱</button>
+        </div>
+        <h3>工序拼图</h3>
+        <p class="muted-text">拖拽或点选，把 6 道工序排回正确顺序。</p>
+        <ol class="puzzle-list" id="puzzleList" aria-label="工序排序"></ol>
+        <p class="game-tip" id="puzzleTip">按住条目拖动排序；或点两项交换位置</p>
+        <button type="button" class="btn btn-primary btn-full" id="puzzleCheck">检查顺序</button>
+        <p class="game-unlock" id="puzzleUnlock" hidden>解锁：制胎→掐丝→点蓝→烧蓝→磨光→镀金，缺一步都难成器。</p>
+      </div>
+
+      <div class="glass card card-gap-top" id="identifyCard">
+        <h3>轻量识物</h3>
+        <p class="muted-text">看细节线索，判断手工还是机器仿品（模拟识物，非真 AR）。</p>
+        <div class="identify-stage" id="identifyStage">
+          <div class="identify-preview" id="identifyPreview" data-mode="mystery">
+            <img src="images/handmade-cloisonne.jpg" alt="识物样本" id="identifyImg" />
+            <div class="identify-clue" id="identifyClue">线索加载中…</div>
+          </div>
+          <div class="identify-actions" id="identifyActions">
+            <button type="button" class="btn btn-secondary" data-guess="hand">纯手工</button>
+            <button type="button" class="btn btn-secondary" data-guess="machine">机器仿品</button>
+          </div>
+          <p class="identify-result" id="identifyResult" aria-live="polite"></p>
+          <button type="button" class="link-btn" id="identifyNext">换一题</button>
+        </div>
+      </div>
+
+      <div class="glass card card-gap-top">
+        <h3>真假放大镜</h3>
+        <p class="muted-text">左右拖动竖线对比两侧；按住画面约 0.2 秒可局部放大丝线与釉面。</p>
+        <div class="vs-slider" id="vsSlider">
+          <div class="vs-layer vs-machine">
+            <img class="vs-bg" src="images/machine-fake.jpg" alt="机器仿品示意" />
+            <div class="vs-copy">
+              <span class="vs-badge">机器仿品</span>
+              <p>平整均匀 · 价格低 · 缺手工呼吸感</p>
+            </div>
+          </div>
+          <div class="vs-layer vs-hand" id="vsHand">
+            <img class="vs-bg vs-bg-hand" src="images/handmade-cloisonne.jpg" alt="纯手工景泰蓝示意" />
+            <div class="vs-copy">
+              <span class="vs-badge">纯手工</span>
+              <p>丝线有温度 · 釉色有层次 · 工序可追溯</p>
+            </div>
+          </div>
+          <input type="range" min="0" max="100" value="55" id="vsRange" aria-label="对比滑块" />
+          <div class="vs-handle" id="vsHandle" aria-hidden="true"></div>
+          <div class="magnifier" id="magnifier" hidden aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 景泰蓝发现 -->
+  <section class="screen theme-blue" id="findings">
+    <div class="wrap reveal">
+      <div class="eyebrow"><span class="dot"></span>田野发现</div>
+      <h2 class="title-lg">工艺可以被看见</h2>
+      <p class="lead">但深度参与仍然不易。</p>
+
+      <div class="findings-stack">
+        <div class="glass card stagger">
+          <h3><span data-config="findings.f1.label">发现 01</span> · <span data-config="findings.f1.title">工艺传承现状</span></h3>
+          <p data-config="findings.f1.text">景泰蓝为国家级非遗，完整留存 108 道纯手工古法工序，制胎、掐丝、点蓝、烧蓝、镀金等核心环节高度依赖匠人经验，机械化无法完全替代。三河毗邻北京，清末便有大量本地工匠赴京学艺，技艺传承根基深厚。当下珑珐琅作为廊坊市级非遗传承单位，严守燕京八绝正统工艺，对标外交国礼制作标准，技艺传承体系完整规范。</p>
+        </div>
+        <div class="glass card stagger">
+          <h3><span data-config="findings.f2.label">发现 02</span> · <span data-config="findings.f2.title">手工体验存在短板</span></h3>
+          <p data-config="findings.f2.text">亲身参与掐丝、点蓝实操后发现大众体验存在三大问题：一是工艺门槛高，新手极易出现铜丝变形、脱丝、釉料串色等失误，成品合格率低；二是完整工序耗时极长，短时体验只能完成局部步骤，无法体会全套工艺复杂度；三是体验偏重动手操作，缺少景泰蓝历史、国礼文化、本土渊源的配套讲解，普遍存在重实操、轻文化的问题。</p>
+        </div>
+        <div class="glass card stagger">
+          <h3><span data-config="findings.f3.label">发现 03</span> · <span data-config="findings.f3.title">非遗传承现实困境</span></h3>
+          <p data-config="findings.f3.text">一是学艺周期长、劳作枯燥辛苦，年轻人入行意愿低，匠人老龄化、人才断层风险突出；二是古法手工制作成本高昂，市面低价机器仿品泛滥，严重冲击正统非遗产品，大众对其工艺价值认知不足；三是技艺传播面较窄，多数人仅知晓景泰蓝名称，对繁复工序与文化内涵了解甚少。</p>
+        </div>
+        <div class="glass card stagger">
+          <h3><span data-config="findings.f4.label">发现 04</span> · <span data-config="findings.f4.title">调研总结感悟</span></h3>
+          <p data-config="findings.f4.text">景泰蓝既是传统手工技艺，也是承载中式美学与大国外交礼仪的文化瑰宝。三河珑珐琅在坚守古法的基础上开展工艺创新、承接国礼创作，实现了非遗活态传承。但传统手工艺传承阻力依旧较大，后续需通过规范研学课程、加大文化普及、推进年轻化创新等方式，让景泰蓝非遗技艺长久焕发生命力。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 发现 -->
+  <section class="screen" id="compare">
+    <div class="wrap reveal">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>案例发现</div>
+          <h2 class="title-lg">看得见，却难学会</h2>
+        </div>
+        <div class="section-num">03</div>
+      </div>
+      <p class="lead">工序可以展示，深度参与仍然不易。</p>
+
+      <div class="compare">
+        <div class="compare-box blue">
+          <h4>看得见</h4>
+          <ul>
+            <li>博物馆主动展示工序</li>
+            <li>体验区降低理解门槛</li>
+            <li>公共可见度较高</li>
+            <li>机会：从“看不懂”到“略懂”</li>
+          </ul>
+        </div>
+        <div class="compare-box blue">
+          <h4>难学会</h4>
+          <ul>
+            <li>学习周期长、门槛高</li>
+            <li>体验型参与多</li>
+            <li>长期从艺意愿低</li>
+            <li>风险：传承断层</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="glass card card-gap-top">
+        <h3>共同问题</h3>
+        <p>青年如何从新观众，变成真正的参与者？</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 建议 -->
+  <section class="screen" id="suggest">
+    <div class="wrap reveal">
+      <div class="eyebrow"><span class="dot"></span>对策建议</div>
+      <h2 class="title-lg">我们提出的建议</h2>
+      <p class="lead">不是空泛口号，而是来自田野证据的行动方向。</p>
+
+      <div class="suggest-grid">
+        <div class="suggest">
+          <strong><span data-config="suggestions.s1.num">01</span> <span data-config="suggestions.s1.title">数字化建档，完善技艺保护机制</span></strong>
+          <p data-config="suggestions.s1.text">针对技艺口传心授、经验易失传问题，拍摄掐丝、烧蓝、镀金等全流程影像，整理釉料、烧制标准形成标准化档案。明确手工景泰蓝与机器仿品区分标准，规范市场；开放工坊工艺观摩，可视化展示古法价值。</p>
+        </div>
+        <div class="suggest">
+          <strong><span data-config="suggestions.s2.num">02</span> <span data-config="suggestions.s2.title">校企双轨育人，化解人才断层难题</span></strong>
+          <p data-config="suggestions.s2.text">采用「师徒传承 + 院校合作」模式，进校园开设非遗课程、组织工坊研学。推行阶梯式模块化教学，降低学艺入门难度；设立学徒津贴、作品展销渠道，改善从业待遇，留住青年从业者，搭建稳定传承队伍。</p>
+        </div>
+        <div class="suggest">
+          <strong><span data-config="suggestions.s3.num">03</span> <span data-config="suggestions.s3.title">分层创新产品，拓展多元消费市场</span></strong>
+          <p data-config="suggestions.s3.text">坚守核心手工工艺，划分三级产品线：高端国礼收藏重器、中端日用茶器首饰、入门平面景泰蓝文创。依托本地平面珐琅专利，联动文旅、国潮品牌跨界开发，打破景泰蓝只有大型摆件的固有认知。</p>
+        </div>
+        <div class="suggest">
+          <strong><span data-config="suggestions.s4.num">04</span> <span data-config="suggestions.s4.title">挖掘国礼 IP，打造特色非遗品牌</span></strong>
+          <p data-config="suggestions.s4.text">围绕《和平尊》《喜凤瓶》等经典国礼举办专题展览，讲好景泰蓝外交文化故事。联动影视、游戏、新媒体跨界宣传，用年轻化形式吸引青年，提升本土品牌格调，摆脱低端纪念品标签。</p>
+        </div>
+        <div class="suggest">
+          <strong><span data-config="suggestions.s5.num">05</span> <span data-config="suggestions.s5.title">线上线下联动，普及非遗认知</span></strong>
+          <p data-config="suggestions.s5.text">线上用短视频、直播科普工序与真假工艺区别；线下开展研学、亲子体验、校园巡展，变单向参观为沉浸式学习。普及手工景泰蓝价值，改善低价仿品冲击行业的现状。</p>
+        </div>
+        <div class="suggest">
+          <strong><span data-config="suggestions.s6.num">06</span> <span data-config="suggestions.s6.title">文旅产业融合，保障长期传承</span></strong>
+          <p data-config="suggestions.s6.text">打造「生产 + 展览 + 研学 + 文创」一体化文旅路线，联动周边文旅资源开发研学打卡点。推进产学研合作，完善原创纹样、器型知识产权保护；争取政策扶持，投入人才培育、数字化存档、设备升级，为非遗长效发展提供支撑。</p>
+        </div>
+      </div>
+
+      <div class="cta-row cta-left">
+        <a class="btn btn-secondary"
+           data-config-href="links.reportAbstractPage"
+           href="abstract.html">查看报告摘要</a>
+        <a class="btn btn-primary"
+           data-config-href="links.documentaryUrl"
+           href="https://your-video-link.com"
+           target="_blank" rel="noopener">观看纪录片</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 互动增强：护照 / 情景 / 国礼 / 路线 / 金句 / 上墙 -->
+  <section class="screen theme-blue" id="engage">
+    <div class="wrap reveal">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>研学互动</div>
+          <h2 class="title-lg">国礼 · 思辨 · 护照</h2>
+        </div>
+        <div class="section-num">04</div>
+      </div>
+      <p class="lead">逛工序、动手、答题、看国礼——盖满印章，带走一张护照海报。</p>
+
+      <div class="glass card" id="quoteCard">
+        <h3>匠人金句 · 15 秒轮播</h3>
+        <div class="quote-stage" id="quoteStage">
+          <p class="quote-role" id="quoteRole">掐丝匠人</p>
+          <p class="quote-text" id="quoteText">最难的不是弯，是弯得刚好贴住胎型。</p>
+        </div>
+        <div class="quote-dots" id="quoteDots" aria-hidden="true"></div>
+      </div>
+
+      <div class="glass card card-gap-top" id="giftCard">
+        <h3>国礼拆解 · 透视</h3>
+        <p class="muted-text">点卡片翻转看「看得见 / 看不见」；长按（按住）可透视胎体→铜丝→釉层。</p>
+        <div class="gift-grid" id="giftGrid"></div>
+      </div>
+
+      <div class="glass card card-gap-top" id="quizCard">
+        <h3>情景选择题</h3>
+        <p class="muted-text">基于田野发现的轻量思辨，没有标准对错。</p>
+        <div class="quiz-box" id="quizBox">
+          <p class="quiz-q" id="quizQ"></p>
+          <div class="quiz-options" id="quizOptions"></div>
+          <p class="quiz-tip" id="quizTip" hidden></p>
+          <div class="quiz-nav">
+            <button type="button" class="btn btn-secondary btn-sm" id="quizPrev">上一题</button>
+            <span class="quiz-index" id="quizIndex">1/3</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="quizNext">下一题</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass card card-gap-top" id="wallCard">
+        <h3>精选留言上墙</h3>
+        <div class="wall-marquee" aria-label="精选留言跑马灯">
+          <div class="wall-track" id="wallTrack"></div>
+        </div>
+      </div>
+
+      <div class="glass card card-gap-top" id="passportCard">
+        <div class="game-meta">
+          <span>研学护照 <strong id="stampCount">0/10</strong></span>
+          <button type="button" class="btn btn-secondary btn-sm" id="resetStamps">重置印章</button>
+        </div>
+        <div class="stamp-grid" id="stampGrid" aria-label="护照印章"></div>
+        <p class="muted-text stamp-hint" id="stampHint">完成对应行为即可盖章（本机保存）。</p>
+        <button type="button" class="btn btn-primary btn-full" id="makePassport">生成护照海报</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 游客行动 -->
+  <section class="screen" id="visit">
+    <div class="wrap reveal">
+      <div class="eyebrow"><span class="dot"></span>带走行动</div>
+      <h2 class="title-lg">去现场，打个卡</h2>
+      <p class="lead">看完档案，下一步可以这样做。</p>
+
+      <div class="action-grid">
+        <button type="button" class="action-card" id="makePoster">
+          <strong>生成打卡海报</strong>
+          <span>保存图片，分享给朋友</span>
+        </button>
+        <a class="action-card" href="#map">
+          <strong>看路线</strong>
+          <span>打开田野地图，选一个点位</span>
+        </a>
+        <a class="action-card" href="#play">
+          <strong>再玩一次掐丝</strong>
+          <span>把「略懂」变成身体记忆</span>
+        </a>
+        <a class="action-card" href="#passportCard">
+          <strong>查看研学护照</strong>
+          <span>盖章进度与护照海报</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 团队 -->
+  <section class="screen" id="team">
+    <div class="wrap reveal">
+      <div class="eyebrow"><span class="dot"></span>团队成果</div>
+      <h2 class="title-lg">我们交出了什么</h2>
+      <p class="lead">报告、纪录片、H5，共同讲述同一个问题。</p>
+
+      <div class="glass card">
+        <h3>成果清单</h3>
+        <p>· 调研报告 1 份（约 <span data-config="stats.reportWords">4300</span> 字）</p>
+        <p>· 微纪录片 1 部（<span data-config="stats.documentaryDuration">1 分 20 秒</span>）</p>
+        <p>· H5 数字档案 1 套（正式交付 · 互动增强）</p>
+      </div>
+
+      <div class="team-grid">
+        <div class="team"><b>田野观察组</b>景泰蓝工坊与展馆走访</div>
+        <div class="team"><b>访谈记录组</b>传承人与参观者访谈</div>
+        <div class="team"><b>研究写作组</b>报告与比较分析</div>
+        <div class="team"><b>影像/设计/编程</b>纪录片与数字展示</div>
+      </div>
+
+      <div class="glass card card-gap-top" id="interact">
+        <h3>团队互动 · 快速表态</h3>
+        <p class="muted-text">看完档案后，选出最打动你的一点（本机记录，可反复切换）</p>
+        <div class="reaction-row" id="reactionRow" role="group" aria-label="快速表态"></div>
+        <p class="reaction-result" id="reactionResult" aria-live="polite"></p>
+      </div>
+
+      <div class="glass card card-gap-top">
+        <h3>留言板</h3>
+        <p class="muted-text" id="messagePrompt">你对燕郊非遗最深的印象是什么？</p>
+        <input class="field-input" id="nicknameInput" type="text" maxlength="24" placeholder="昵称（可选）" autocomplete="nickname" />
+        <textarea id="messageInput" placeholder="写下你的看法……" maxlength="300"></textarea>
+        <div class="board-actions">
+          <button class="btn btn-primary btn-flex" id="submitMessage" type="button">提交留言</button>
+          <button class="btn btn-secondary btn-flex" id="sharePage" type="button">复制链接</button>
+        </div>
+        <p class="board-hint" id="boardHint">留言保存在本机浏览器，适合团队互评；跨设备请在 config.js 配置问卷星。</p>
+        <div class="message-list" id="messageList" aria-live="polite"></div>
+        <button class="link-btn" id="clearMessages" type="button">清空本机留言</button>
+      </div>
+
+      <div class="footer-logo">
+        <span data-config="meta.teamName">「畿辅文薪·匠心永续」数字化调研实践团</span>
+        · <span data-config="meta.year">2026</span> 暑期
+        <br />
+        <span class="version-tag" id="versionTag">正式交付 v2.0</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 点位弹层 -->
+  <div class="modal" id="placeModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-sheet glass" role="dialog" aria-modal="true" aria-labelledby="placeModalTitle">
+      <button type="button" class="modal-close" data-close-modal aria-label="关闭">×</button>
+      <p class="eyebrow"><span class="dot"></span><span id="placeModalTip">点位</span></p>
+      <h3 id="placeModalTitle">点位名称</h3>
+      <p id="placeModalDesc" class="modal-desc"></p>
+      <div class="cta-row cta-left">
+        <a class="btn btn-primary" id="placeModalNav" href="#" target="_blank" rel="noopener">打开地图导航</a>
+        <button type="button" class="btn btn-secondary" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 海报弹层 -->
+  <div class="modal" id="posterModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-sheet glass" role="dialog" aria-modal="true" aria-labelledby="posterModalTitle">
+      <button type="button" class="modal-close" data-close-modal aria-label="关闭">×</button>
+      <h3 id="posterModalTitle">打卡海报</h3>
+      <canvas id="posterCanvas" width="720" height="960"></canvas>
+      <div class="cta-row cta-left">
+        <button type="button" class="btn btn-primary" id="downloadPoster">保存图片</button>
+        <button type="button" class="btn btn-secondary" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 护照海报弹层 -->
+  <div class="modal" id="passportModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-sheet glass passport-poster" role="dialog" aria-modal="true" aria-labelledby="passportModalTitle">
+      <button type="button" class="modal-close" data-close-modal aria-label="关闭">×</button>
+      <p class="passport-poster-eyebrow">掐丝点蓝 · 国礼纪念</p>
+      <h3 id="passportModalTitle">畿辅文薪 · 研学护照</h3>
+      <p class="passport-poster-desc">景泰蓝田野印章册内页，可保存带走</p>
+      <div class="passport-poster-frame">
+        <canvas id="passportCanvas" width="720" height="960"></canvas>
+      </div>
+      <div class="cta-row cta-left">
+        <button type="button" class="btn btn-primary" id="downloadPassport">珍藏保存</button>
+        <button type="button" class="btn btn-secondary" data-close-modal>关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <button type="button" class="visit-back-fab" id="visitBackFab" hidden aria-label="返回打卡行动">
+    ↓ 回行动
+  </button>
+
+  <nav class="nav" aria-label="页面导航">
+    <a href="#home" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h14V10"/></svg>
+      首页
+    </a>
+    <a href="#cloisonne">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2.2 6.8H21l-5.5 4 2.1 6.7L12 15.8 6.4 19.5l2.1-6.7L3 8.8h6.8L12 2z"/></svg>
+      工序
+    </a>
+    <a href="#play">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 5v14l11-7z"/></svg>
+      体验
+    </a>
+    <a href="#passportCard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h10v4H7z"/><path d="M5 7h14v14H5z"/><path d="M9 12h6M9 16h4"/></svg>
+      护照
+    </a>
+    <a href="#team">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 5-5s5 1.7 5 5M11 20c0-2.2 1.8-4 4-4"/></svg>
+      团队
+    </a>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/config.js?v=2.2.38"></script>
+  <script src="js/app.js?v=2.2.38"></script>
+  <script src="js/engage.js?v=2.2.38"></script>
+</body>
+</html>

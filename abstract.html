@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="燕郊非遗田野档案 · 报告摘要" />
+  <title>报告摘要 · 燕郊非遗田野档案</title>
+  <link rel="stylesheet" href="css/style.css?v=2.2.23" />
+</head>
+<body class="page-abstract">
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+  <div class="bg-orb orb3"></div>
+
+  <section class="screen abstract-screen">
+    <div class="wrap reveal show">
+      <div class="eyebrow"><span class="dot"></span>调研报告</div>
+      <h1 class="title-lg" data-config="reportAbstract.title">报告摘要</h1>
+      <p class="lead">景泰蓝非遗田野调查 · 全文摘要</p>
+
+      <div class="glass card abstract-card" id="report-abstract">
+        <p data-config="reportAbstract.text">本文以三河市珑珐琅景泰蓝非遗传承基地、景泰蓝博物馆、天下第一城体验馆为调研对象，综合运用文献研究、实地观察、归纳总结、匠人访谈等方法，开展景泰蓝非遗田野调查。三河紧邻北京，拥有悠久的景泰蓝传承脉络，本地珑珐琅完整保留 108 道传统手工工序，创新平面景泰蓝工艺，多件作品作为外交国礼，是京津冀代表性非遗工坊。调研发现行业现存六大核心问题：匠人老龄化、人才传承断层；原料与制作成本高，中小工坊盈利困难；机器仿品扰乱市场，产品同质化严重；传统技艺依靠口传心授，技艺留存存在流失风险；大众文化普及不足；产业配套不完善、政策扶持不均衡。同时实地体验发现手工研学体验门槛高、流程简化、重实操轻文化，非遗传播浮于表面。针对以上现状，本文从技艺数字化保护、校企双轨人才培育、分层文创产品创新、深挖国礼 IP 打造区域品牌、线上线下融合科普、文旅产学研协同发展六个维度提出优化路径，通过数字化存艺、年轻化培育、市场化创新、品牌化传播推动景泰蓝活态传承。调研表明，三河景泰蓝文化底蕴深厚，但传承发展阻力突出，唯有多措并举完善保护与产业体系，才能让本土非遗持续焕发活力。</p>
+      </div>
+
+      <div class="cta-row cta-left">
+        <a class="btn btn-primary" href="index.html#suggest">返回主站</a>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/config.js?v=2.2.23"></script>
+  <script>
+    (function () {
+      const cfg = window.PROJECT_CONFIG;
+      if (!cfg) return;
+
+      function getByPath(obj, path) {
+        return path.split(".").reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+      }
+
+      document.querySelectorAll("[data-config]").forEach((el) => {
+        const value = getByPath(cfg, el.getAttribute("data-config"));
+        if (value !== undefined && value !== null && value !== "") {
+          el.textContent = String(value);
+        }
+      });
+
+      document.querySelectorAll("[data-config-href]").forEach((el) => {
+        const value = getByPath(cfg, el.getAttribute("data-config-href"));
+        if (value) el.setAttribute("href", value);
+      });
+
+      if (cfg.meta && cfg.meta.title) {
+        document.title = (cfg.reportAbstract && cfg.reportAbstract.title
+          ? cfg.reportAbstract.title
+          : "报告摘要") + " · " + cfg.meta.title;
+      }
+    })();
+  </script>
+</body>
+</html>
