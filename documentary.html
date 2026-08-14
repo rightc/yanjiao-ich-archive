@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="燕郊非遗田野档案 · 微纪录片" />
   <title>观看纪录片 · 燕郊非遗田野档案</title>
-  <link rel="stylesheet" href="css/style.css?v=2.2.42" />
+  <link rel="stylesheet" href="css/style.css?v=2.2.43" />
 </head>
 <body class="page-documentary">
   <div class="bg-orb orb1"></div>
@@ -20,12 +20,13 @@
       <p class="lead">工序见匠心，一器载山河</p>
 
       <div class="glass card documentary-card">
-        <div class="documentary-player">
+        <div class="documentary-player" id="documentaryPlayer">
           <video
             id="documentaryVideo"
             class="documentary-video"
             controls
             playsinline
+            webkit-playsinline
             autoplay
             preload="metadata"
             controlslist="nodownload"
@@ -42,45 +43,106 @@
     </div>
   </section>
 
-  <script src="js/config.js?v=2.2.42"></script>
+  <script src="js/config.js?v=2.2.43"></script>
   <script>
     (function () {
       const STORAGE_Y = "yanjiao:docReturnScroll";
       const STORAGE_PATH = "yanjiao:docReturnPath";
       const video = document.getElementById("documentaryVideo");
-      const player = document.querySelector(".documentary-player");
+      const player = document.getElementById("documentaryPlayer");
       const backBtn = document.getElementById("documentaryBackBtn");
       const hint = document.getElementById("documentaryHint");
       const cfg = window.PROJECT_CONFIG || {};
       const media = cfg.media || {};
-      const src = media.documentaryVideo || (cfg.links && cfg.links.documentaryUrl) || "videos/documentary.mp4";
+      const src =
+        media.documentaryVideo ||
+        (cfg.links && cfg.links.documentaryUrl && String(cfg.links.documentaryUrl).endsWith(".mp4")
+          ? cfg.links.documentaryUrl
+          : null) ||
+        "videos/documentary.mp4";
 
+      /** 按当前终端可视区自适应，不再强制 3/4 */
       function fitPlayer() {
         if (!video || !player) return;
-        const vw = window.innerWidth || document.documentElement.clientWidth || 320;
-        const vh = window.innerHeight || document.documentElement.clientHeight || 480;
-        const w = Math.max(Math.floor(vw * 0.75), Math.floor(vw * 0.96));
-        const h = Math.max(Math.floor(vh * 0.75), Math.floor(vh * 0.72));
-        player.style.width = w + "px";
-        player.style.minWidth = Math.floor(vw * 0.75) + "px";
-        player.style.height = h + "px";
-        player.style.minHeight = Math.floor(vh * 0.75) + "px";
+
+        // 先清掉旧的内联尺寸，回到 CSS 流式布局再测量
+        player.style.width = "";
+        player.style.height = "";
+        player.style.minWidth = "";
+        player.style.minHeight = "";
+        player.style.maxHeight = "";
+        player.style.aspectRatio = "";
+        video.style.width = "";
+        video.style.height = "";
+        video.style.minWidth = "";
+        video.style.minHeight = "";
+
+        const screen = document.querySelector(".documentary-screen");
+        const wrap = document.querySelector(".page-documentary .wrap");
+        const eyebrow = wrap && wrap.querySelector(".eyebrow");
+        const title = wrap && wrap.querySelector(".title-lg");
+        const lead = wrap && wrap.querySelector(".lead");
+        const cta = wrap && wrap.querySelector(".cta-row");
+        const hintEl = document.getElementById("documentaryHint");
+
+        function h(el) {
+          if (!el) return 0;
+          const st = window.getComputedStyle(el);
+          if (st.display === "none") return 0;
+          return el.getBoundingClientRect().height;
+        }
+
+        const chrome =
+          h(eyebrow) +
+          h(title) +
+          h(lead) +
+          h(hintEl) +
+          h(cta) +
+          36;
+        const pad = screen
+          ? (parseFloat(window.getComputedStyle(screen).paddingTop) || 0) +
+            (parseFloat(window.getComputedStyle(screen).paddingBottom) || 0)
+          : 0;
+
+        const availH = Math.max(140, (window.innerHeight || 480) - chrome - pad);
+        const availW = Math.max(
+          140,
+          (player.parentElement && player.parentElement.clientWidth) ||
+            (wrap && wrap.clientWidth) ||
+            window.innerWidth ||
+            320
+        );
+
+        let w = availW;
+        let ht = (w * 9) / 16;
+        if (ht > availH) {
+          ht = availH;
+          w = Math.min(availW, (ht * 16) / 9);
+        }
+
+        player.style.width = Math.floor(w) + "px";
+        player.style.height = Math.floor(ht) + "px";
+        player.style.maxHeight = "none";
+        player.style.aspectRatio = "auto";
         video.style.width = "100%";
         video.style.height = "100%";
-        video.style.minWidth = "100%";
-        video.style.minHeight = "100%";
       }
 
       fitPlayer();
       window.addEventListener("resize", fitPlayer);
       window.addEventListener("orientationchange", function () {
-        window.setTimeout(fitPlayer, 120);
+        window.setTimeout(fitPlayer, 160);
       });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", fitPlayer);
+      }
 
       if (video) {
         const source = video.querySelector("source");
         if (source) source.src = src;
         video.src = src;
+        video.setAttribute("playsinline", "");
+        video.setAttribute("webkit-playsinline", "");
         video.load();
         const playPromise = video.play();
         if (playPromise && typeof playPromise.catch === "function") {
@@ -88,6 +150,7 @@
             if (hint) hint.textContent = "请点击播放按钮开始观看；结束后点「返回」回到原位置";
           });
         }
+        video.addEventListener("loadedmetadata", fitPlayer);
         video.addEventListener("ended", function () {
           if (hint) hint.textContent = "播放完成，点「返回」可回到刚才浏览的位置";
         });
