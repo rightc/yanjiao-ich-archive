@@ -805,22 +805,39 @@
   function ensureProcessVideoSrc(video, src, startSeconds) {
     if (!video || !src) return Promise.resolve(false);
     const base = stripMediaFragment(src);
-    const nextSrc = withTimeFragment(base, startSeconds);
     const activeKey = fileKey(video.getAttribute("data-active-src") || "");
-    const readySame =
-      activeKey &&
-      activeKey === fileKey(base) &&
-      video.readyState >= 1 &&
-      isFinite(video.duration) &&
-      video.duration > 0;
+    const nextKey = fileKey(base);
+    const hasSrc = !!(video.currentSrc || video.getAttribute("src") || (video.querySelector("source") && video.querySelector("source").getAttribute("src")));
 
-    // 已是同一文件：不必 reload，直接 seek（避免 load() 把进度打回 0）
-    if (readySame) return Promise.resolve(false);
+    // 同一文件：绝不再 load()/换 src（否则章节跳转会反复刷新）
+    if (activeKey && activeKey === nextKey && hasSrc) {
+      if (video.readyState >= 1 && isFinite(video.duration) && video.duration > 0) {
+        return Promise.resolve(false);
+      }
+      return new Promise((resolve) => {
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          video.removeEventListener("loadedmetadata", onMeta);
+          video.removeEventListener("canplay", onMeta);
+          resolve(false);
+        };
+        const onMeta = () => done();
+        video.addEventListener("loadedmetadata", onMeta);
+        video.addEventListener("canplay", onMeta);
+        window.setTimeout(done, 8000);
+      });
+    }
 
+    // 首次绑定：只用干净 URL，时间点交给 currentTime seek（不要 #t=，避免重复加载）
     video.setAttribute("data-active-src", base);
     const source = video.querySelector("source");
-    if (source) source.setAttribute("src", nextSrc);
-    video.src = nextSrc;
+    if (source) {
+      source.setAttribute("src", base);
+      source.removeAttribute("data-src");
+    }
+    video.src = base;
 
     return new Promise((resolve) => {
       let settled = false;
@@ -828,17 +845,19 @@
         if (settled) return;
         settled = true;
         video.removeEventListener("loadedmetadata", onMeta);
+        video.removeEventListener("canplay", onMeta);
         resolve(switched);
       };
       const onMeta = () => done(true);
       video.addEventListener("loadedmetadata", onMeta);
+      video.addEventListener("canplay", onMeta);
       try {
         video.load();
       } catch (e) {
         done(true);
         return;
       }
-      window.setTimeout(() => done(true), 2000);
+      window.setTimeout(() => done(true), 8000);
     });
   }
 
@@ -895,10 +914,24 @@
             } catch (e) {
               /* ignore */
             }
-            window.setTimeout(playAt, 80);
+          }
+          const finish = () => {
+            if (token !== processSeekToken) return resolve(false);
+            playAt();
+          };
+          if (video.readyState >= 2) {
+            finish();
             return;
           }
-          playAt();
+          const onCanPlay = () => {
+            video.removeEventListener("canplay", onCanPlay);
+            finish();
+          };
+          video.addEventListener("canplay", onCanPlay);
+          window.setTimeout(() => {
+            video.removeEventListener("canplay", onCanPlay);
+            finish();
+          }, 1200);
         };
 
         video.addEventListener("seeked", onSeeked);
@@ -982,11 +1015,53 @@
     const media = cfg().media || {};
     const master = media.cloisonneVideo || "videos/cloisonne-process.mp4";
 
-    if (video && !video.getAttribute("data-active-src")) {
+    function lazyArmProcessVideo() {
+      if (!video || video.dataset.lazyArmed === "1") return;
+      video.dataset.lazyArmed = "1";
       const source = video.querySelector("source");
-      const initial = stripMediaFragment((source && source.getAttribute("src")) || master);
-      video.setAttribute("data-active-src", initial);
+      // 去掉即时 src，避免首屏就开始下载整片
+      if (source) {
+        if (!source.getAttribute("data-src")) {
+          source.setAttribute("data-src", source.getAttribute("src") || master);
+        }
+        source.removeAttribute("src");
+      }
+      video.removeAttribute("src");
+      try {
+        video.load();
+      } catch (e) {
+        /* ignore */
+      }
+
+      const loadNow = () => {
+        if (video.getAttribute("data-active-src")) return;
+        ensureProcessVideoSrc(video, master, 0);
+      };
+
+      video.addEventListener(
+        "play",
+        () => {
+          loadNow();
+        },
+        { once: true }
+      );
+
+      if (typeof IntersectionObserver !== "undefined") {
+        const io = new IntersectionObserver(
+          (entries) => {
+            if (entries.some((en) => en.isIntersecting)) {
+              loadNow();
+              io.disconnect();
+            }
+          },
+          { rootMargin: "240px 0px" }
+        );
+        io.observe(video);
+      }
     }
+
+    lazyArmProcessVideo();
+
     if (bar) {
       bar.innerHTML = steps
         .map(

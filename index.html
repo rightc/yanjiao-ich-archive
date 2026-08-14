@@ -13,7 +13,7 @@
 
   <title>燕郊非遗田野档案</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/style.css?v=2.2.43" />
+  <link rel="stylesheet" href="css/style.css?v=2.2.45" />
 </head>
 <body>
   <div class="progress" id="progress"></div>
@@ -161,11 +161,11 @@
       <p class="chapter-tip" id="chapterTip">点上方工序，将在同一支视频内跳到对应阶段</p>
 
       <div class="media">
-        <!-- 单视频 + 章节 seek；preload=metadata 避免首屏拉满整片 -->
-        <video id="processVideo" controls playsinline preload="metadata"
+        <!-- 延迟加载：首屏只显示海报，滑近或点击后再拉视频 -->
+        <video id="processVideo" controls playsinline preload="none"
                data-config-poster="media.cloisonnePoster"
                poster="images/cloisonne-poster.jpg">
-          <source data-config-src="media.cloisonneVideo" src="videos/cloisonne-process.mp4" type="video/mp4" />
+          <source data-config-src="media.cloisonneVideo" data-src="videos/cloisonne-process.mp4" type="video/mp4" />
         </video>
       </div>
 
@@ -790,8 +790,8 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/config.js?v=2.2.43"></script>
-  <script src="js/app.js?v=2.2.43"></script>
-  <script src="js/engage.js?v=2.2.43"></script>
+  <script src="js/config.js?v=2.2.45"></script>
+  <script src="js/app.js?v=2.2.45"></script>
+  <script src="js/engage.js?v=2.2.45"></script>
 </body>
 </html>

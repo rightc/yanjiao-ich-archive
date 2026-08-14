@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="燕郊非遗田野档案 · 微纪录片" />
   <title>观看纪录片 · 燕郊非遗田野档案</title>
-  <link rel="stylesheet" href="css/style.css?v=2.2.43" />
+  <link rel="stylesheet" href="css/style.css?v=2.2.44" />
 </head>
 <body class="page-documentary">
   <div class="bg-orb orb1"></div>
@@ -27,12 +27,15 @@
             controls
             playsinline
             webkit-playsinline
-            autoplay
-            preload="metadata"
+            preload="none"
+            poster="images/documentary-poster.jpg"
             controlslist="nodownload"
           >
-            <source src="videos/documentary.mp4" type="video/mp4" />
+            <source data-src="videos/documentary.mp4" type="video/mp4" />
           </video>
+          <button type="button" class="documentary-play-gate" id="documentaryPlayGate" aria-label="播放纪录片">
+            ▶ 点击播放
+          </button>
         </div>
         <p class="muted-text documentary-hint" id="documentaryHint">播放完成后，可点下方返回原浏览位置</p>
       </div>
@@ -43,7 +46,7 @@
     </div>
   </section>
 
-  <script src="js/config.js?v=2.2.43"></script>
+  <script src="js/config.js?v=2.2.44"></script>
   <script>
     (function () {
       const STORAGE_Y = "yanjiao:docReturnScroll";
@@ -137,23 +140,62 @@
         window.visualViewport.addEventListener("resize", fitPlayer);
       }
 
-      if (video) {
-        const source = video.querySelector("source");
-        if (source) source.src = src;
-        video.src = src;
-        video.setAttribute("playsinline", "");
-        video.setAttribute("webkit-playsinline", "");
-        video.load();
+      const gate = document.getElementById("documentaryPlayGate");
+      let mediaReady = false;
+
+      function startPlayback() {
+        if (!video) return;
+        if (!mediaReady) {
+          const poster = media.documentaryPoster || "images/documentary-poster.jpg";
+          video.setAttribute("poster", poster);
+          const source = video.querySelector("source");
+          if (source) {
+            source.src = src;
+            source.removeAttribute("data-src");
+          }
+          video.src = src;
+          video.setAttribute("playsinline", "");
+          video.setAttribute("webkit-playsinline", "");
+          try {
+            video.load();
+          } catch (e) {
+            /* ignore */
+          }
+          mediaReady = true;
+          if (hint) hint.textContent = "正在加载纪录片…";
+        }
+        if (gate) gate.hidden = true;
         const playPromise = video.play();
         if (playPromise && typeof playPromise.catch === "function") {
           playPromise.catch(function () {
-            if (hint) hint.textContent = "请点击播放按钮开始观看；结束后点「返回」回到原位置";
+            if (hint) hint.textContent = "请点击播放控件开始观看；结束后点「返回」回到原位置";
+            if (gate) gate.hidden = false;
           });
         }
+      }
+
+      if (video) {
+        const poster = media.documentaryPoster || "images/documentary-poster.jpg";
+        video.setAttribute("poster", poster);
         video.addEventListener("loadedmetadata", fitPlayer);
+        video.addEventListener("playing", function () {
+          if (hint) hint.textContent = "播放中；结束后点「返回」可回到刚才浏览的位置";
+          if (gate) gate.hidden = true;
+        });
         video.addEventListener("ended", function () {
           if (hint) hint.textContent = "播放完成，点「返回」可回到刚才浏览的位置";
         });
+      }
+
+      if (gate) gate.addEventListener("click", startPlayback);
+      if (video) {
+        video.addEventListener(
+          "play",
+          function () {
+            startPlayback();
+          },
+          { once: true }
+        );
       }
 
       function goBack() {

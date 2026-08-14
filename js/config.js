@@ -48,6 +48,7 @@ window.PROJECT_CONFIG = {
     cloisonnePoster: "images/cloisonne-poster.jpg",
     cloisonneVideo: "videos/cloisonne-process.mp4",
     documentaryVideo: "videos/documentary.mp4",
+    documentaryPoster: "images/documentary-poster.jpg",
     shareCover: "images/share-cover.jpg",
     bgm: "audio/bgm.mp3",
     bgmVolume: 1,
