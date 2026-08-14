@@ -13,7 +13,7 @@
 
   <title>燕郊非遗田野档案</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/style.css?v=2.2.47" />
+  <link rel="stylesheet" href="css/style.css?v=2.2.48" />
 </head>
 <body>
   <div class="progress" id="progress"></div>
@@ -158,12 +158,12 @@
       <p class="lead" data-config="cases.cloisonne.subtitle">工序见匠心，一器载山河</p>
 
       <div class="chapter-bar" id="chapterBar" aria-label="工序章节"></div>
-      <p class="chapter-tip" id="chapterTip">点上方工序，将在同一支视频内跳到对应阶段</p>
+      <p class="chapter-tip" id="chapterTip">点上方工序，加载对应短视频（弱网更稳）</p>
 
       <div class="media">
-        <!-- 工序视频：尽早加载元数据；章节跳转只改 currentTime，禁止反复 load -->
+        <!-- 工序视频：各工序为独立短文件；点章节切换 src 播放 -->
         <video id="processVideo" controls playsinline webkit-playsinline
-               x5-playsinline="true" x5-video-player-type="h5" preload="auto"
+               x5-playsinline="true" x5-video-player-type="h5" preload="none"
                data-config-poster="media.cloisonnePoster"
                poster="images/cloisonne-poster.jpg">
           <source data-config-src="media.cloisonneVideo" src="videos/cloisonne-process.mp4" type="video/mp4" />
@@ -791,8 +791,8 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/config.js?v=2.2.47"></script>
-  <script src="js/app.js?v=2.2.47"></script>
-  <script src="js/engage.js?v=2.2.47"></script>
+  <script src="js/config.js?v=2.2.48"></script>
+  <script src="js/app.js?v=2.2.48"></script>
+  <script src="js/engage.js?v=2.2.48"></script>
 </body>
 </html>

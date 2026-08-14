@@ -3,8 +3,8 @@
  * 团队改数字、链接、文案时，优先只改这个文件
  */
 window.PROJECT_CONFIG = {
-  version: "2.2.21",
-  deliveryStatus: "正式交付 · 工序跳转修复",
+  version: "2.2.48",
+  deliveryStatus: "正式交付 · 工序短视频分段",
 
   meta: {
     title: "燕郊非遗田野档案",
@@ -174,17 +174,17 @@ window.PROJECT_CONFIG = {
     ]
   },
 
-  // 工序共用 media.cloisonneVideo（约 4:49）。改时间点只需改 startSeconds（秒）
+  // 工序按段拆成短文件（弱网友好）。全片仍用 media.cloisonneVideo
   processSteps: [
-    { id: "full", title: "全片", tip: "从片头连续播放", startSeconds: 0, ariaLabel: "从片头播放完整纪录片" },
-    { id: "intro", title: "介绍", tip: "了解景泰蓝由来与概况", startSeconds: 0 },
-    { id: "tai", title: "制胎", tip: "紫铜板锻造器型", startSeconds: 28 },
-    { id: "qiasi", title: "掐丝", tip: "黄铜丝勾勒纹样", startSeconds: 60 },
-    { id: "zhansi", title: "粘丝", tip: "白芨胶固丝贴胎", startSeconds: 97 },
-    { id: "dianlan", title: "点蓝", tip: "矿物釉填入纹格", startSeconds: 128 },
-    { id: "shaolan", title: "烧蓝", tip: "高温熔固循环多遍", startSeconds: 168 },
-    { id: "mouguang", title: "磨光", tip: "砂石木炭抛出光泽", startSeconds: 200 },
-    { id: "dujin", title: "镀金", tip: "铜丝镀金收尾", startSeconds: 250 }
+    { id: "full", title: "全片", tip: "从片头连续播放", videoSrc: "videos/cloisonne-process.mp4", ariaLabel: "从片头播放完整工序片" },
+    { id: "intro", title: "介绍", tip: "了解景泰蓝由来与概况", videoSrc: "videos/process/intro.mp4" },
+    { id: "tai", title: "制胎", tip: "紫铜板锻造器型", videoSrc: "videos/process/tai.mp4" },
+    { id: "qiasi", title: "掐丝", tip: "黄铜丝勾勒纹样", videoSrc: "videos/process/qiasi.mp4" },
+    { id: "zhansi", title: "粘丝", tip: "白芨胶固丝贴胎", videoSrc: "videos/process/zhansi.mp4" },
+    { id: "dianlan", title: "点蓝", tip: "矿物釉填入纹格", videoSrc: "videos/process/dianlan.mp4" },
+    { id: "shaolan", title: "烧蓝", tip: "高温熔固循环多遍", videoSrc: "videos/process/shaolan.mp4" },
+    { id: "mouguang", title: "磨光", tip: "砂石木炭抛出光泽", videoSrc: "videos/process/mouguang.mp4" },
+    { id: "dujin", title: "镀金", tip: "铜丝镀金收尾", videoSrc: "videos/process/dujin.mp4" }
   ],
 
   gallery: [

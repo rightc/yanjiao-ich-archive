@@ -753,15 +753,8 @@
     }
   }
 
-  /* ===== 工序章节：同一支视频内按 startSeconds 跳转 ===== */
-  let processSeekToken = 0;
-
-  function formatTimecode(sec) {
-    const s = Math.max(0, Math.floor(Number(sec) || 0));
-    const m = Math.floor(s / 60);
-    const r = s % 60;
-    return `${m}:${String(r).padStart(2, "0")}`;
-  }
+  /* ===== 工序章节：每段独立短视频，点击切换 src 播放 ===== */
+  let processPlayToken = 0;
 
   function resolveProcessVideoSrc(step) {
     const media = cfg().media || {};
@@ -774,25 +767,6 @@
     return String(url || "").split("#")[0];
   }
 
-  function withTimeFragment(url, seconds) {
-    const base = stripMediaFragment(url);
-    const t = Math.max(0, Math.floor(Number(seconds) || 0));
-    return t > 0 ? `${base}#t=${t}` : base;
-  }
-
-  function isTimeSeekable(video, t) {
-    if (!video || !isFinite(video.duration) || video.duration <= 0) return false;
-    if (!video.seekable || video.seekable.length === 0) {
-      // 元数据已到但 seekable 尚未建立时，仍允许尝试（依赖 Range + faststart）
-      return video.readyState >= 1;
-    }
-    for (let i = 0; i < video.seekable.length; i += 1) {
-      if (t >= video.seekable.start(i) - 0.25 && t <= video.seekable.end(i) + 0.25) return true;
-    }
-    // 部分浏览器把整段标成可 seek
-    return video.seekable.end(video.seekable.length - 1) + 0.5 >= t;
-  }
-
   function fileKey(url) {
     const clean = stripMediaFragment(url || "");
     try {
@@ -802,130 +776,35 @@
     }
   }
 
-  function ensureProcessVideoSrc(video, src) {
-    if (!video || !src) return Promise.resolve(false);
+  function bindProcessVideoSrc(video, src) {
+    if (!video || !src) return false;
     const base = stripMediaFragment(src);
-    const activeKey = fileKey(video.getAttribute("data-active-src") || "");
-    const nextKey = fileKey(base);
+    const same = fileKey(video.getAttribute("data-active-src") || "") === fileKey(base);
+    if (same && video.getAttribute("src") === base) return false;
+
     const source = video.querySelector("source");
-    const bound = activeKey && activeKey === nextKey;
-
-    if (bound && isFinite(video.duration) && video.duration > 0 && video.readyState >= 1) {
-      return Promise.resolve(false);
+    video.setAttribute("data-active-src", base);
+    if (source) {
+      source.setAttribute("src", base);
+      source.removeAttribute("data-src");
     }
-
-    if (!bound) {
-      video.setAttribute("data-active-src", base);
-      if (source) {
-        source.setAttribute("src", base);
-        source.removeAttribute("data-src");
-      }
-      // 手机端（尤其 iOS）更认 video.src
-      video.src = base;
-      try {
-        video.load();
-      } catch (e) {
-        /* ignore */
-      }
+    video.src = base;
+    try {
+      video.load();
+    } catch (e) {
+      /* ignore */
     }
-
-    if (isFinite(video.duration) && video.duration > 0 && video.readyState >= 1) {
-      return Promise.resolve(!bound);
-    }
-
-    return new Promise((resolve) => {
-      let settled = false;
-      const done = (v) => {
-        if (settled) return;
-        settled = true;
-        video.removeEventListener("loadedmetadata", onReady);
-        video.removeEventListener("durationchange", onReady);
-        resolve(v);
-      };
-      const onReady = () => {
-        if (isFinite(video.duration) && video.duration > 0) done(!bound);
-      };
-      video.addEventListener("loadedmetadata", onReady);
-      video.addEventListener("durationchange", onReady);
-      window.setTimeout(() => done(!bound), 15000);
-    });
+    return true;
   }
 
-  function resolveStepTime(step, video) {
-    if (typeof step.startSeconds === "number") return step.startSeconds;
-    const duration = video && video.duration;
-    if (duration && isFinite(duration) && typeof step.startRatio === "number") {
-      return duration * step.startRatio;
-    }
-    return 0;
-  }
-
-  function clampProcessTime(video, target) {
-    let t = Number(target) || 0;
-    const duration = video && video.duration;
-    if (duration && isFinite(duration) && duration > 0) {
-      t = Math.min(Math.max(t, 0), Math.max(duration - 0.25, 0));
-    }
-    return t;
-  }
-
-  function jumpProcessTo(video, target, token) {
-    if (!video || token !== processSeekToken) return;
-    const t = clampProcessTime(video, target);
-
-    const resume = () => {
-      if (token !== processSeekToken) return;
-      const p = video.play();
-      if (p && typeof p.catch === "function") p.catch(() => {});
-    };
-
-    const apply = () => {
-      if (token !== processSeekToken) return;
-      try {
-        if (typeof video.fastSeek === "function") video.fastSeek(t);
-        else video.currentTime = t;
-      } catch (e) {
-        try {
-          video.currentTime = t;
-        } catch (err) {
-          /* ignore */
-        }
-      }
-    };
-
-    const onSeeked = () => {
-      video.removeEventListener("seeked", onSeeked);
-      resume();
-      // 校验：部分手机 seek 后停住
-      window.setTimeout(() => {
-        if (token !== processSeekToken) return;
-        if (Math.abs((video.currentTime || 0) - t) > 1.5) {
-          apply();
-        }
-        resume();
-      }, 220);
-    };
-
-    video.addEventListener("seeked", onSeeked);
-    apply();
-    resume();
-
-    // 兜底：不派发 seeked 时仍继续播
-    window.setTimeout(() => {
-      if (token !== processSeekToken) return;
-      video.removeEventListener("seeked", onSeeked);
-      resume();
-    }, 1200);
-  }
-
-  function seekProcess(stepId) {
+  function playProcessClip(stepId) {
     const steps = cfg().processSteps || [];
     const step = steps.find((s) => s.id === stepId) || steps[0];
     if (!step) return;
     const video = document.getElementById("processVideo");
     const tip = document.getElementById("chapterTip");
-    const token = ++processSeekToken;
-    const targetSec = typeof step.startSeconds === "number" ? step.startSeconds : 0;
+    const token = ++processPlayToken;
+    const src = resolveProcessVideoSrc(step);
 
     document.querySelectorAll(".chapter-chip").forEach((chip) => {
       chip.classList.toggle("active", chip.getAttribute("data-step") === step.id);
@@ -934,7 +813,7 @@
       el.classList.toggle("active", el.getAttribute("data-step") === step.id);
     });
     if (tip) {
-      tip.textContent = `${step.title} · ${step.tip || "点击播放该段"} · ${formatTimecode(targetSec)}`;
+      tip.textContent = `${step.title} · ${step.tip || "点击播放该段"}`;
     }
 
     if (step.id && step.id !== "intro" && step.id !== "full") {
@@ -947,58 +826,41 @@
       return;
     }
 
-    const src = resolveProcessVideoSrc(step);
-    const base = stripMediaFragment(src);
-    const source = video.querySelector("source");
-
-    // —— 手机端关键路径：全部尽量落在点击同步调用栈 ——
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
     video.setAttribute("x5-playsinline", "true");
     video.setAttribute("x5-video-player-type", "h5");
     video.playsInline = true;
 
-    const needBind = fileKey(video.getAttribute("data-active-src") || "") !== fileKey(base);
-    if (needBind) {
-      video.setAttribute("data-active-src", base);
-      if (source) source.setAttribute("src", base);
-      video.src = base;
+    bindProcessVideoSrc(video, src);
+
+    // 同步 play：保住用户手势（手机自动播放策略）
+    const tryPlay = () => {
+      if (token !== processPlayToken) return;
       try {
-        video.load();
+        video.currentTime = 0;
       } catch (e) {
         /* ignore */
       }
-    }
-
-    // 同步 play：保住手势，驱动 iOS 真正开始拉流
-    const playPromise = video.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(() => {});
-    }
-
-    const runJump = () => {
-      if (token !== processSeekToken) return;
-      jumpProcessTo(video, targetSec, token);
+      const p = video.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
     };
 
-    if (isFinite(video.duration) && video.duration > 0 && video.readyState >= 1) {
-      // 已有元数据：稍延迟一帧再 seek，避免与 play() 抢状态
-      window.requestAnimationFrame(runJump);
-      return;
-    }
+    tryPlay();
 
-    const onMeta = () => {
-      video.removeEventListener("loadedmetadata", onMeta);
-      video.removeEventListener("durationchange", onMeta);
-      // metadata 后必须再 play 一次（手机常见）
-      video.play().then(runJump).catch(runJump);
+    const onReady = () => {
+      if (token !== processPlayToken) return;
+      video.removeEventListener("loadeddata", onReady);
+      video.removeEventListener("canplay", onReady);
+      tryPlay();
     };
-    video.addEventListener("loadedmetadata", onMeta);
-    video.addEventListener("durationchange", onMeta);
-    window.setTimeout(() => {
-      if (token !== processSeekToken) return;
-      if (isFinite(video.duration) && video.duration > 0) onMeta();
-    }, 800);
+    video.addEventListener("loadeddata", onReady);
+    video.addEventListener("canplay", onReady);
+  }
+
+  // 兼容旧调用名
+  function seekProcess(stepId) {
+    playProcessClip(stepId);
   }
 
   function initChapters() {
@@ -1014,8 +876,8 @@
       video.setAttribute("x5-playsinline", "true");
       video.setAttribute("x5-video-player-type", "h5");
       video.playsInline = true;
-      // 预绑定源，但不在无手势时强制 play
-      ensureProcessVideoSrc(video, master);
+      // 仅绑定默认海报源，不预拉全片（弱网省流量）
+      video.setAttribute("data-active-src", master);
     }
 
     if (bar) {
@@ -1023,7 +885,7 @@
         .map(
           (s, i) =>
             `<button type="button" class="chapter-chip${i === 0 ? " active" : ""}" data-step="${escapeHtml(s.id)}"${
-              typeof s.startSeconds === "number" ? ` data-start="${s.startSeconds}"` : ""
+              s.videoSrc ? ` data-src="${escapeHtml(s.videoSrc)}"` : ""
             }${s.ariaLabel ? ` aria-label="${escapeHtml(s.ariaLabel)}"` : ""}>${escapeHtml(s.title)}</button>`
         )
         .join("");
@@ -1032,11 +894,8 @@
         if (!chip) return;
         e.preventDefault();
         const stepId = chip.getAttribute("data-step");
-        const step = steps.find((s) => s.id === stepId);
-        seekProcess(stepId);
-        const at =
-          step && typeof step.startSeconds === "number" ? `（${formatTimecode(step.startSeconds)}）` : "";
-        showToast(stepId === "full" ? `从片头播放${at}` : `跳到「${chip.textContent}」${at}`);
+        playProcessClip(stepId);
+        showToast(stepId === "full" ? "播放全片" : `播放「${chip.textContent}」`);
       });
     }
 
@@ -1044,7 +903,7 @@
       el.addEventListener("click", () => {
         const id = el.getAttribute("data-step");
         if (!id) return;
-        seekProcess(id);
+        playProcessClip(id);
       });
     });
   }
