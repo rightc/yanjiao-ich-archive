@@ -39,7 +39,7 @@ window.PROJECT_CONFIG = {
 
   links: {
     siteUrl: "https://rightc.github.io/yanjiao-ich-archive/",
-    documentaryUrl: "https://your-video-link.com",
+    documentaryUrl: "documentary.html",
     reportAbstractPage: "abstract.html",
     feedbackForm: ""
   },
@@ -47,6 +47,7 @@ window.PROJECT_CONFIG = {
   media: {
     cloisonnePoster: "images/cloisonne-poster.jpg",
     cloisonneVideo: "videos/cloisonne-process.mp4",
+    documentaryVideo: "videos/documentary.mp4",
     shareCover: "images/share-cover.jpg",
     bgm: "audio/bgm.mp3",
     bgmVolume: 1,

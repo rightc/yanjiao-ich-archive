@@ -1670,6 +1670,123 @@ textarea {
   line-height: 1.75;
 }
 
+/* —— 独立纪录片页：播放器随窗体自适应，不小于视口 3/4 —— */
+.page-documentary {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.page-documentary .screen.documentary-screen {
+  justify-content: flex-start;
+  padding: 18px 0 20px;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.page-documentary .wrap {
+  max-width: 96vw;
+  width: 96vw;
+  margin: 0 auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.documentary-screen .eyebrow {
+  margin-bottom: 8px;
+}
+
+.documentary-screen .title-lg {
+  font-size: clamp(20px, 4.5vw, 30px);
+  margin-bottom: 4px;
+}
+
+.documentary-screen .lead {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.documentary-card {
+  margin-top: 4px;
+  padding: 6px;
+  width: 100%;
+}
+
+.documentary-player {
+  margin: 0;
+  width: 100%;
+  min-width: 75vw;
+  min-height: 75vh;
+  min-height: 75dvh;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.documentary-video {
+  display: block;
+  width: 100%;
+  height: 75vh;
+  height: 75dvh;
+  min-width: 75vw;
+  min-height: 75vh;
+  min-height: 75dvh;
+  max-width: 100%;
+  max-height: 82vh;
+  max-height: 82dvh;
+  object-fit: contain;
+  background: #000;
+}
+
+.documentary-hint {
+  margin: 10px 8px 4px;
+  font-size: 13px;
+}
+
+.page-documentary .cta-row {
+  margin-top: 12px;
+  padding: 0 8px;
+}
+
+@media (orientation: landscape) {
+  .documentary-player,
+  .documentary-video {
+    min-height: 75vh;
+    min-height: 75dvh;
+    height: 75vh;
+    height: 75dvh;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-documentary .wrap {
+    max-width: 100vw;
+    width: 100vw;
+  }
+
+  .documentary-card {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .documentary-player {
+    border-radius: 0;
+    min-width: 100vw;
+    width: 100vw;
+  }
+
+  .documentary-video {
+    min-width: 100vw;
+    width: 100vw;
+  }
+}
+
 #posterCanvas {
   width: 100%;
   height: auto;

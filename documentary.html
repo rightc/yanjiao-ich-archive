@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="燕郊非遗田野档案 · 微纪录片" />
+  <title>观看纪录片 · 燕郊非遗田野档案</title>
+  <link rel="stylesheet" href="css/style.css?v=2.2.42" />
+</head>
+<body class="page-documentary">
+  <div class="bg-orb orb1"></div>
+  <div class="bg-orb orb2"></div>
+  <div class="bg-orb orb3"></div>
+
+  <section class="screen documentary-screen">
+    <div class="wrap reveal show">
+      <div class="eyebrow"><span class="dot"></span>微纪录片</div>
+      <h1 class="title-lg">燕郊非遗田野档案</h1>
+      <p class="lead">工序见匠心，一器载山河</p>
+
+      <div class="glass card documentary-card">
+        <div class="documentary-player">
+          <video
+            id="documentaryVideo"
+            class="documentary-video"
+            controls
+            playsinline
+            autoplay
+            preload="metadata"
+            controlslist="nodownload"
+          >
+            <source src="videos/documentary.mp4" type="video/mp4" />
+          </video>
+        </div>
+        <p class="muted-text documentary-hint" id="documentaryHint">播放完成后，可点下方返回原浏览位置</p>
+      </div>
+
+      <div class="cta-row cta-left">
+        <button type="button" class="btn btn-primary" id="documentaryBackBtn">返回</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/config.js?v=2.2.42"></script>
+  <script>
+    (function () {
+      const STORAGE_Y = "yanjiao:docReturnScroll";
+      const STORAGE_PATH = "yanjiao:docReturnPath";
+      const video = document.getElementById("documentaryVideo");
+      const player = document.querySelector(".documentary-player");
+      const backBtn = document.getElementById("documentaryBackBtn");
+      const hint = document.getElementById("documentaryHint");
+      const cfg = window.PROJECT_CONFIG || {};
+      const media = cfg.media || {};
+      const src = media.documentaryVideo || (cfg.links && cfg.links.documentaryUrl) || "videos/documentary.mp4";
+
+      function fitPlayer() {
+        if (!video || !player) return;
+        const vw = window.innerWidth || document.documentElement.clientWidth || 320;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 480;
+        const w = Math.max(Math.floor(vw * 0.75), Math.floor(vw * 0.96));
+        const h = Math.max(Math.floor(vh * 0.75), Math.floor(vh * 0.72));
+        player.style.width = w + "px";
+        player.style.minWidth = Math.floor(vw * 0.75) + "px";
+        player.style.height = h + "px";
+        player.style.minHeight = Math.floor(vh * 0.75) + "px";
+        video.style.width = "100%";
+        video.style.height = "100%";
+        video.style.minWidth = "100%";
+        video.style.minHeight = "100%";
+      }
+
+      fitPlayer();
+      window.addEventListener("resize", fitPlayer);
+      window.addEventListener("orientationchange", function () {
+        window.setTimeout(fitPlayer, 120);
+      });
+
+      if (video) {
+        const source = video.querySelector("source");
+        if (source) source.src = src;
+        video.src = src;
+        video.load();
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(function () {
+            if (hint) hint.textContent = "请点击播放按钮开始观看；结束后点「返回」回到原位置";
+          });
+        }
+        video.addEventListener("ended", function () {
+          if (hint) hint.textContent = "播放完成，点「返回」可回到刚才浏览的位置";
+        });
+      }
+
+      function goBack() {
+        const path = sessionStorage.getItem(STORAGE_PATH) || "index.html";
+        if (window.history.length > 1) {
+          const ref = document.referrer || "";
+          const sameOrigin = !ref || ref.indexOf(location.origin) === 0;
+          if (sameOrigin) {
+            history.back();
+            return;
+          }
+        }
+        location.href = path.indexOf("documentary.html") >= 0 ? "index.html" : path;
+      }
+
+      if (backBtn) backBtn.addEventListener("click", goBack);
+    })();
+  </script>
+</body>
+</html>

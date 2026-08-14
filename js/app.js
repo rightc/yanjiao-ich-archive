@@ -573,6 +573,58 @@
     document.body.style.overflow = "";
   }
 
+  function initDocumentaryLink() {
+    const STORAGE_Y = "yanjiao:docReturnScroll";
+    const STORAGE_PATH = "yanjiao:docReturnPath";
+    const openBtn = document.getElementById("openDocumentary");
+
+    function restoreScroll() {
+      const raw = sessionStorage.getItem(STORAGE_Y);
+      if (raw == null || raw === "") return;
+      const y = Number(raw);
+      sessionStorage.removeItem(STORAGE_Y);
+      sessionStorage.removeItem(STORAGE_PATH);
+      if (!Number.isFinite(y)) return;
+      const apply = () => window.scrollTo(0, y);
+      apply();
+      window.requestAnimationFrame(apply);
+      window.setTimeout(apply, 50);
+      window.setTimeout(apply, 280);
+    }
+
+    // 从纪录片页返回时还原滚动位置
+    restoreScroll();
+    window.addEventListener("pageshow", restoreScroll);
+
+    if (!openBtn) return;
+
+    const href =
+      (cfg().links && cfg().links.documentaryUrl) ||
+      openBtn.getAttribute("href") ||
+      "documentary.html";
+    openBtn.setAttribute("href", href);
+
+    openBtn.addEventListener("click", (e) => {
+      // 记录当前位置，供纪录片页「返回」后还原
+      const y = window.scrollY || window.pageYOffset || 0;
+      try {
+        sessionStorage.setItem(STORAGE_Y, String(y));
+        sessionStorage.setItem(
+          STORAGE_PATH,
+          location.pathname.split("/").pop() || "index.html"
+        );
+      } catch (err) {
+        /* private mode 等忽略 */
+      }
+      // 使用默认跳转到独立播放页
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || openBtn.target === "_blank") {
+        return;
+      }
+      e.preventDefault();
+      location.href = href;
+    });
+  }
+
   function initPlaces() {
     const list = document.getElementById("placeList");
     const places = getPlaces();
@@ -1741,6 +1793,7 @@
       initParallax,
       initAccordion,
       initPlaces,
+      initDocumentaryLink,
       initChapters,
       initGallery,
       initFiligreeGame,
