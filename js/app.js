@@ -802,14 +802,19 @@
     }
   }
 
-  function ensureProcessVideoSrc(video, src, startSeconds) {
+  function ensureProcessVideoSrc(video, src) {
     if (!video || !src) return Promise.resolve(false);
     const base = stripMediaFragment(src);
     const activeKey = fileKey(video.getAttribute("data-active-src") || "");
     const nextKey = fileKey(base);
-    const hasSrc = !!(video.currentSrc || video.getAttribute("src") || (video.querySelector("source") && video.querySelector("source").getAttribute("src")));
+    const source = video.querySelector("source");
+    const hasSrc = !!(
+      video.currentSrc ||
+      video.getAttribute("src") ||
+      (source && source.getAttribute("src"))
+    );
 
-    // 同一文件：绝不再 load()/换 src（否则章节跳转会反复刷新）
+    // 同一文件：绝不 reload（手机端反复 load 会一直转圈）
     if (activeKey && activeKey === nextKey && hasSrc) {
       if (video.readyState >= 1 && isFinite(video.duration) && video.duration > 0) {
         return Promise.resolve(false);
@@ -819,45 +824,48 @@
         const done = () => {
           if (settled) return;
           settled = true;
-          video.removeEventListener("loadedmetadata", onMeta);
-          video.removeEventListener("canplay", onMeta);
+          video.removeEventListener("loadedmetadata", onReady);
+          video.removeEventListener("durationchange", onReady);
           resolve(false);
         };
-        const onMeta = () => done();
-        video.addEventListener("loadedmetadata", onMeta);
-        video.addEventListener("canplay", onMeta);
-        window.setTimeout(done, 8000);
+        const onReady = () => {
+          if (video.readyState >= 1 && isFinite(video.duration) && video.duration > 0) done();
+        };
+        video.addEventListener("loadedmetadata", onReady);
+        video.addEventListener("durationchange", onReady);
+        window.setTimeout(done, 12000);
       });
     }
 
-    // 首次绑定：只用干净 URL，时间点交给 currentTime seek（不要 #t=，避免重复加载）
     video.setAttribute("data-active-src", base);
-    const source = video.querySelector("source");
     if (source) {
       source.setAttribute("src", base);
       source.removeAttribute("data-src");
     }
-    video.src = base;
+    // 只设 source.src + load，避免 source/video.src 双写在部分手机上冲突
+    if (!source) video.src = base;
 
     return new Promise((resolve) => {
       let settled = false;
       const done = (switched) => {
         if (settled) return;
         settled = true;
-        video.removeEventListener("loadedmetadata", onMeta);
-        video.removeEventListener("canplay", onMeta);
+        video.removeEventListener("loadedmetadata", onReady);
+        video.removeEventListener("durationchange", onReady);
         resolve(switched);
       };
-      const onMeta = () => done(true);
-      video.addEventListener("loadedmetadata", onMeta);
-      video.addEventListener("canplay", onMeta);
+      const onReady = () => {
+        if (isFinite(video.duration) && video.duration > 0) done(true);
+      };
+      video.addEventListener("loadedmetadata", onReady);
+      video.addEventListener("durationchange", onReady);
       try {
         video.load();
       } catch (e) {
         done(true);
         return;
       }
-      window.setTimeout(() => done(true), 8000);
+      window.setTimeout(() => done(true), 12000);
     });
   }
 
@@ -872,100 +880,95 @@
 
   function seekToTime(video, target, token) {
     return new Promise((resolve) => {
-      const duration = video.duration;
-      let t = target;
-      if (duration && isFinite(duration)) {
-        t = Math.min(Math.max(t, 0), Math.max(duration - 0.35, 0));
-      }
-
-      let attempts = 0;
-      const maxAttempts = 24;
-
-      const playAt = () => {
-        if (token !== processSeekToken) return resolve(false);
-        video.play().catch(() => {});
-        resolve(true);
+      let settled = false;
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        resolve(!!ok);
       };
 
-      const tryOnce = () => {
-        if (token !== processSeekToken) return resolve(false);
-        attempts += 1;
-
-        if (!isFinite(video.duration) || video.duration <= 0) {
-          if (attempts < maxAttempts) {
-            window.setTimeout(tryOnce, 120);
-            return;
-          }
-          return resolve(false);
+      const clampTime = () => {
+        let t = Number(target) || 0;
+        const duration = video.duration;
+        if (duration && isFinite(duration) && duration > 0) {
+          t = Math.min(Math.max(t, 0), Math.max(duration - 0.25, 0));
         }
+        return t;
+      };
 
-        if (!isTimeSeekable(video, t) && attempts < 12) {
-          window.setTimeout(tryOnce, 150);
+      const playSafe = () => {
+        if (token !== processSeekToken) return finish(false);
+        const p = video.play();
+        if (p && typeof p.then === "function") {
+          p.then(() => finish(true)).catch(() => {
+            window.setTimeout(() => {
+              video.play().then(() => finish(true)).catch(() => finish(false));
+            }, 180);
+          });
           return;
         }
+        finish(true);
+      };
 
+      const doSeek = () => {
+        if (token !== processSeekToken) return finish(false);
+        const t = clampTime();
+
+        // 手机端：不要空等 seekable；直接 seek，由浏览器 Range 拉流
+        let gotSeeked = false;
         const onSeeked = () => {
+          if (gotSeeked) return;
+          gotSeeked = true;
           video.removeEventListener("seeked", onSeeked);
-          if (token !== processSeekToken) return resolve(false);
-          // 校正回弹
-          if (Math.abs(video.currentTime - t) > 1.0) {
+          video.removeEventListener("canplay", onCanPlay);
+          if (Math.abs((video.currentTime || 0) - t) > 1.25) {
             try {
               video.currentTime = t;
             } catch (e) {
               /* ignore */
             }
           }
-          const finish = () => {
-            if (token !== processSeekToken) return resolve(false);
-            playAt();
-          };
-          if (video.readyState >= 2) {
-            finish();
-            return;
-          }
-          const onCanPlay = () => {
-            video.removeEventListener("canplay", onCanPlay);
-            finish();
-          };
-          video.addEventListener("canplay", onCanPlay);
-          window.setTimeout(() => {
-            video.removeEventListener("canplay", onCanPlay);
-            finish();
-          }, 1200);
+          playSafe();
+        };
+        const onCanPlay = () => {
+          if (Math.abs((video.currentTime || 0) - t) <= 1.5) onSeeked();
         };
 
         video.addEventListener("seeked", onSeeked);
+        video.addEventListener("canplay", onCanPlay);
+
         try {
-          video.pause();
+          // 保持播放态跳转，比 pause+seek 在移动端更稳
           video.currentTime = t;
         } catch (e) {
           video.removeEventListener("seeked", onSeeked);
-          if (attempts < maxAttempts) {
-            window.setTimeout(tryOnce, 160);
-            return;
-          }
-          return resolve(false);
+          video.removeEventListener("canplay", onCanPlay);
+          return finish(false);
         }
 
-        // seeked 未触发时兜底
         window.setTimeout(() => {
-          if (token !== processSeekToken) return;
-          video.removeEventListener("seeked", onSeeked);
-          if (Math.abs(video.currentTime - t) <= 1.5) {
-            playAt();
-            return;
-          }
-          if (attempts < maxAttempts) {
-            window.setTimeout(tryOnce, 180);
-            return;
-          }
-          // 最后一次仍失败：提示可能是本地服务不支持 Range
-          showToast("跳转未生效：请用 python3 serve.py 打开本页");
-          playAt();
-        }, 700);
+          if (token !== processSeekToken) return finish(false);
+          if (!gotSeeked) onSeeked();
+        }, 1600);
       };
 
-      tryOnce();
+      if (isFinite(video.duration) && video.duration > 0) {
+        doSeek();
+        return;
+      }
+
+      let waits = 0;
+      const waitMeta = () => {
+        if (token !== processSeekToken) return finish(false);
+        if (isFinite(video.duration) && video.duration > 0) {
+          doSeek();
+          return;
+        }
+        waits += 1;
+        if (waits > 40) return finish(false);
+        window.setTimeout(waitMeta, 100);
+      };
+      waitMeta();
     });
   }
 
@@ -975,7 +978,6 @@
     if (!step) return;
     const video = document.getElementById("processVideo");
     const tip = document.getElementById("chapterTip");
-    const targetSec = typeof step.startSeconds === "number" ? step.startSeconds : 0;
     const token = ++processSeekToken;
 
     document.querySelectorAll(".chapter-chip").forEach((chip) => {
@@ -985,6 +987,7 @@
       el.classList.toggle("active", el.getAttribute("data-step") === step.id);
     });
     if (tip) {
+      const targetSec = typeof step.startSeconds === "number" ? step.startSeconds : 0;
       tip.textContent = `${step.title} · ${step.tip || "点击播放该段"} · ${formatTimecode(targetSec)}`;
     }
 
@@ -1001,10 +1004,20 @@
     video.scrollIntoView({ behavior: "smooth", block: "center" });
 
     const src = resolveProcessVideoSrc(step);
-    ensureProcessVideoSrc(video, src, targetSec).then(() => {
+    const alreadyBound = !!video.getAttribute("data-active-src");
+
+    // 关键：在点击同步栈里先 play，保住手机端用户手势
+    if (alreadyBound) {
+      video.play().catch(() => {});
+    }
+
+    ensureProcessVideoSrc(video, src).then(() => {
       if (token !== processSeekToken) return;
       const t = resolveStepTime(step, video);
-      seekToTime(video, t, token);
+      if (!alreadyBound) {
+        video.play().catch(() => {});
+      }
+      return seekToTime(video, t, token);
     });
   }
 
@@ -1015,52 +1028,27 @@
     const media = cfg().media || {};
     const master = media.cloisonneVideo || "videos/cloisonne-process.mp4";
 
-    function lazyArmProcessVideo() {
+    function bindProcessVideo() {
       if (!video || video.dataset.lazyArmed === "1") return;
       video.dataset.lazyArmed = "1";
-      const source = video.querySelector("source");
-      // 去掉即时 src，避免首屏就开始下载整片
-      if (source) {
-        if (!source.getAttribute("data-src")) {
-          source.setAttribute("data-src", source.getAttribute("src") || master);
-        }
-        source.removeAttribute("src");
-      }
-      video.removeAttribute("src");
-      try {
-        video.load();
-      } catch (e) {
-        /* ignore */
-      }
-
-      const loadNow = () => {
-        if (video.getAttribute("data-active-src")) return;
-        ensureProcessVideoSrc(video, master, 0);
-      };
-
-      video.addEventListener(
-        "play",
-        () => {
-          loadNow();
-        },
-        { once: true }
-      );
-
-      if (typeof IntersectionObserver !== "undefined") {
-        const io = new IntersectionObserver(
-          (entries) => {
-            if (entries.some((en) => en.isIntersecting)) {
-              loadNow();
-              io.disconnect();
-            }
-          },
-          { rootMargin: "240px 0px" }
-        );
-        io.observe(video);
-      }
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      ensureProcessVideoSrc(video, master);
     }
 
-    lazyArmProcessVideo();
+    bindProcessVideo();
+    if (typeof IntersectionObserver !== "undefined" && video) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((en) => en.isIntersecting)) {
+            bindProcessVideo();
+            io.disconnect();
+          }
+        },
+        { rootMargin: "320px 0px" }
+      );
+      io.observe(video);
+    }
 
     if (bar) {
       bar.innerHTML = steps
