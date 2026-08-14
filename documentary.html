@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="燕郊非遗田野档案 · 微纪录片" />
   <title>观看纪录片 · 燕郊非遗田野档案</title>
-  <link rel="stylesheet" href="css/style.css?v=2.2.46" />
+  <link rel="stylesheet" href="css/style.css?v=2.2.47" />
 </head>
 <body class="page-documentary">
   <div class="bg-orb orb1"></div>
@@ -36,7 +36,7 @@
             <source src="videos/documentary.mp4" type="video/mp4" />
           </video>
         </div>
-        <p class="muted-text documentary-hint" id="documentaryHint">进入本页后自动加载播放；结束后点「返回」回到原位置</p>
+        <p class="muted-text documentary-hint" id="documentaryHint">正在加载纪录片…</p>
       </div>
 
       <div class="cta-row cta-left">
@@ -45,7 +45,7 @@
     </div>
   </section>
 
-  <script src="js/config.js?v=2.2.46"></script>
+  <script src="js/config.js?v=2.2.47"></script>
   <script>
     (function () {
       const STORAGE_PATH = "yanjiao:docReturnPath";
@@ -122,34 +122,102 @@
       }
 
       if (video) {
+        let playStarted = false;
+        let playTries = 0;
+
         video.setAttribute("poster", poster);
+        video.setAttribute("playsinline", "");
+        video.setAttribute("webkit-playsinline", "");
+        video.playsInline = true;
+        video.muted = true; // 手机端自动播放必须静音起步
+        video.defaultMuted = true;
+        video.setAttribute("muted", "");
+        video.setAttribute("autoplay", "");
+
         const source = video.querySelector("source");
         if (source) source.src = src;
         video.src = src;
-        video.muted = true; // 保证手机可自动播放，随后尝试解除静音
-        video.load();
 
-        const tryPlay = function () {
+        function setHint(text) {
+          if (hint) hint.textContent = text;
+        }
+
+        function startPlayWhenReady() {
+          if (playStarted) return;
+          if (video.readyState < 3 && video.networkState === 2) {
+            // HAVE_FUTURE_DATA 未到且仍在加载：继续等
+            setHint("正在加载纪录片…");
+            return;
+          }
+          // readyState >= 2(HAVE_CURRENT_DATA) 即可尝试开播
+          if (video.readyState < 2) {
+            setHint("正在加载纪录片…");
+            return;
+          }
+
+          playTries += 1;
+          setHint("加载完成，正在自动播放…");
+          video.muted = true;
+
           const p = video.play();
-          if (!p || typeof p.then !== "function") return;
-          p.then(function () {
-            // 自动开播成功后尝试恢复声音（部分浏览器允许）
-            video.muted = false;
-            if (hint) hint.textContent = "播放中；结束后点「返回」可回到刚才浏览的位置";
-          }).catch(function () {
-            if (hint) hint.textContent = "已自动加载，请点画面播放；结束后点「返回」回到原位置";
-          });
-        };
+          if (p && typeof p.then === "function") {
+            p.then(function () {
+              playStarted = true;
+              setHint("播放中（可点控件开声音）；结束后点「返回」回到原位置");
+              // 自动开播成功后再试一次取消静音（失败则保持静音继续播）
+              window.setTimeout(function () {
+                try {
+                  video.muted = false;
+                } catch (e) {
+                  video.muted = true;
+                }
+              }, 400);
+            }).catch(function () {
+              if (playTries < 8) {
+                window.setTimeout(startPlayWhenReady, 350);
+                return;
+              }
+              setHint("已加载完成，请点一下画面开始播放");
+            });
+          } else {
+            playStarted = true;
+          }
+        }
 
-        video.addEventListener("loadedmetadata", function () {
-          fitPlayer();
-          tryPlay();
+        video.addEventListener("loadstart", function () {
+          setHint("正在加载纪录片…");
+        });
+        video.addEventListener("loadedmetadata", fitPlayer);
+        video.addEventListener("loadeddata", startPlayWhenReady);
+        video.addEventListener("canplay", startPlayWhenReady);
+        video.addEventListener("canplaythrough", startPlayWhenReady);
+        video.addEventListener("playing", function () {
+          playStarted = true;
+          setHint("播放中（可点控件开声音）；结束后点「返回」回到原位置");
+        });
+        video.addEventListener("waiting", function () {
+          if (!playStarted) setHint("正在缓冲…");
         });
         video.addEventListener("ended", function () {
-          if (hint) hint.textContent = "播放完成，点「返回」可回到刚才浏览的位置";
+          setHint("播放完成，点「返回」可回到刚才浏览的位置");
         });
-        // 立即尝试一次
-        tryPlay();
+        video.addEventListener("error", function () {
+          setHint("视频加载失败，请检查网络后重试");
+        });
+
+        try {
+          video.load();
+        } catch (e) {
+          /* ignore */
+        }
+
+        // 兜底轮询：弱网下事件可能不全
+        var poll = 0;
+        var timer = window.setInterval(function () {
+          poll += 1;
+          startPlayWhenReady();
+          if (playStarted || poll > 40) window.clearInterval(timer);
+        }, 400);
       }
 
       function goBack() {
