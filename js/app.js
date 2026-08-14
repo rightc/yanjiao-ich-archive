@@ -808,64 +808,46 @@
     const activeKey = fileKey(video.getAttribute("data-active-src") || "");
     const nextKey = fileKey(base);
     const source = video.querySelector("source");
-    const hasSrc = !!(
-      video.currentSrc ||
-      video.getAttribute("src") ||
-      (source && source.getAttribute("src"))
-    );
+    const bound = activeKey && activeKey === nextKey;
 
-    // 同一文件：绝不 reload（手机端反复 load 会一直转圈）
-    if (activeKey && activeKey === nextKey && hasSrc) {
-      if (video.readyState >= 1 && isFinite(video.duration) && video.duration > 0) {
-        return Promise.resolve(false);
+    if (bound && isFinite(video.duration) && video.duration > 0 && video.readyState >= 1) {
+      return Promise.resolve(false);
+    }
+
+    if (!bound) {
+      video.setAttribute("data-active-src", base);
+      if (source) {
+        source.setAttribute("src", base);
+        source.removeAttribute("data-src");
       }
-      return new Promise((resolve) => {
-        let settled = false;
-        const done = () => {
-          if (settled) return;
-          settled = true;
-          video.removeEventListener("loadedmetadata", onReady);
-          video.removeEventListener("durationchange", onReady);
-          resolve(false);
-        };
-        const onReady = () => {
-          if (video.readyState >= 1 && isFinite(video.duration) && video.duration > 0) done();
-        };
-        video.addEventListener("loadedmetadata", onReady);
-        video.addEventListener("durationchange", onReady);
-        window.setTimeout(done, 12000);
-      });
+      // 手机端（尤其 iOS）更认 video.src
+      video.src = base;
+      try {
+        video.load();
+      } catch (e) {
+        /* ignore */
+      }
     }
 
-    video.setAttribute("data-active-src", base);
-    if (source) {
-      source.setAttribute("src", base);
-      source.removeAttribute("data-src");
+    if (isFinite(video.duration) && video.duration > 0 && video.readyState >= 1) {
+      return Promise.resolve(!bound);
     }
-    // 只设 source.src + load，避免 source/video.src 双写在部分手机上冲突
-    if (!source) video.src = base;
 
     return new Promise((resolve) => {
       let settled = false;
-      const done = (switched) => {
+      const done = (v) => {
         if (settled) return;
         settled = true;
         video.removeEventListener("loadedmetadata", onReady);
         video.removeEventListener("durationchange", onReady);
-        resolve(switched);
+        resolve(v);
       };
       const onReady = () => {
-        if (isFinite(video.duration) && video.duration > 0) done(true);
+        if (isFinite(video.duration) && video.duration > 0) done(!bound);
       };
       video.addEventListener("loadedmetadata", onReady);
       video.addEventListener("durationchange", onReady);
-      try {
-        video.load();
-      } catch (e) {
-        done(true);
-        return;
-      }
-      window.setTimeout(() => done(true), 12000);
+      window.setTimeout(() => done(!bound), 15000);
     });
   }
 
@@ -878,98 +860,62 @@
     return 0;
   }
 
-  function seekToTime(video, target, token) {
-    return new Promise((resolve) => {
-      let settled = false;
-      const finish = (ok) => {
-        if (settled) return;
-        settled = true;
-        resolve(!!ok);
-      };
+  function clampProcessTime(video, target) {
+    let t = Number(target) || 0;
+    const duration = video && video.duration;
+    if (duration && isFinite(duration) && duration > 0) {
+      t = Math.min(Math.max(t, 0), Math.max(duration - 0.25, 0));
+    }
+    return t;
+  }
 
-      const clampTime = () => {
-        let t = Number(target) || 0;
-        const duration = video.duration;
-        if (duration && isFinite(duration) && duration > 0) {
-          t = Math.min(Math.max(t, 0), Math.max(duration - 0.25, 0));
-        }
-        return t;
-      };
+  function jumpProcessTo(video, target, token) {
+    if (!video || token !== processSeekToken) return;
+    const t = clampProcessTime(video, target);
 
-      const playSafe = () => {
-        if (token !== processSeekToken) return finish(false);
-        const p = video.play();
-        if (p && typeof p.then === "function") {
-          p.then(() => finish(true)).catch(() => {
-            window.setTimeout(() => {
-              video.play().then(() => finish(true)).catch(() => finish(false));
-            }, 180);
-          });
-          return;
-        }
-        finish(true);
-      };
+    const resume = () => {
+      if (token !== processSeekToken) return;
+      const p = video.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    };
 
-      const doSeek = () => {
-        if (token !== processSeekToken) return finish(false);
-        const t = clampTime();
-
-        // 手机端：不要空等 seekable；直接 seek，由浏览器 Range 拉流
-        let gotSeeked = false;
-        const onSeeked = () => {
-          if (gotSeeked) return;
-          gotSeeked = true;
-          video.removeEventListener("seeked", onSeeked);
-          video.removeEventListener("canplay", onCanPlay);
-          if (Math.abs((video.currentTime || 0) - t) > 1.25) {
-            try {
-              video.currentTime = t;
-            } catch (e) {
-              /* ignore */
-            }
-          }
-          playSafe();
-        };
-        const onCanPlay = () => {
-          if (Math.abs((video.currentTime || 0) - t) <= 1.5) onSeeked();
-        };
-
-        video.addEventListener("seeked", onSeeked);
-        video.addEventListener("canplay", onCanPlay);
-
+    const apply = () => {
+      if (token !== processSeekToken) return;
+      try {
+        if (typeof video.fastSeek === "function") video.fastSeek(t);
+        else video.currentTime = t;
+      } catch (e) {
         try {
-          // 保持播放态跳转，比 pause+seek 在移动端更稳
           video.currentTime = t;
-        } catch (e) {
-          video.removeEventListener("seeked", onSeeked);
-          video.removeEventListener("canplay", onCanPlay);
-          return finish(false);
+        } catch (err) {
+          /* ignore */
         }
-
-        window.setTimeout(() => {
-          if (token !== processSeekToken) return finish(false);
-          if (!gotSeeked) onSeeked();
-        }, 1600);
-      };
-
-      if (isFinite(video.duration) && video.duration > 0) {
-        doSeek();
-        return;
       }
+    };
 
-      let waits = 0;
-      const waitMeta = () => {
-        if (token !== processSeekToken) return finish(false);
-        if (isFinite(video.duration) && video.duration > 0) {
-          doSeek();
-          return;
+    const onSeeked = () => {
+      video.removeEventListener("seeked", onSeeked);
+      resume();
+      // 校验：部分手机 seek 后停住
+      window.setTimeout(() => {
+        if (token !== processSeekToken) return;
+        if (Math.abs((video.currentTime || 0) - t) > 1.5) {
+          apply();
         }
-        waits += 1;
-        if (waits > 40) return finish(false);
-        window.setTimeout(waitMeta, 100);
-      };
-      waitMeta();
-    });
+        resume();
+      }, 220);
+    };
+
+    video.addEventListener("seeked", onSeeked);
+    apply();
+    resume();
+
+    // 兜底：不派发 seeked 时仍继续播
+    window.setTimeout(() => {
+      if (token !== processSeekToken) return;
+      video.removeEventListener("seeked", onSeeked);
+      resume();
+    }, 1200);
   }
 
   function seekProcess(stepId) {
@@ -979,6 +925,7 @@
     const video = document.getElementById("processVideo");
     const tip = document.getElementById("chapterTip");
     const token = ++processSeekToken;
+    const targetSec = typeof step.startSeconds === "number" ? step.startSeconds : 0;
 
     document.querySelectorAll(".chapter-chip").forEach((chip) => {
       chip.classList.toggle("active", chip.getAttribute("data-step") === step.id);
@@ -987,7 +934,6 @@
       el.classList.toggle("active", el.getAttribute("data-step") === step.id);
     });
     if (tip) {
-      const targetSec = typeof step.startSeconds === "number" ? step.startSeconds : 0;
       tip.textContent = `${step.title} · ${step.tip || "点击播放该段"} · ${formatTimecode(targetSec)}`;
     }
 
@@ -1001,24 +947,58 @@
       return;
     }
 
-    video.scrollIntoView({ behavior: "smooth", block: "center" });
-
     const src = resolveProcessVideoSrc(step);
-    const alreadyBound = !!video.getAttribute("data-active-src");
+    const base = stripMediaFragment(src);
+    const source = video.querySelector("source");
 
-    // 关键：在点击同步栈里先 play，保住手机端用户手势
-    if (alreadyBound) {
-      video.play().catch(() => {});
+    // —— 手机端关键路径：全部尽量落在点击同步调用栈 ——
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("x5-playsinline", "true");
+    video.setAttribute("x5-video-player-type", "h5");
+    video.playsInline = true;
+
+    const needBind = fileKey(video.getAttribute("data-active-src") || "") !== fileKey(base);
+    if (needBind) {
+      video.setAttribute("data-active-src", base);
+      if (source) source.setAttribute("src", base);
+      video.src = base;
+      try {
+        video.load();
+      } catch (e) {
+        /* ignore */
+      }
     }
 
-    ensureProcessVideoSrc(video, src).then(() => {
+    // 同步 play：保住手势，驱动 iOS 真正开始拉流
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {});
+    }
+
+    const runJump = () => {
       if (token !== processSeekToken) return;
-      const t = resolveStepTime(step, video);
-      if (!alreadyBound) {
-        video.play().catch(() => {});
-      }
-      return seekToTime(video, t, token);
-    });
+      jumpProcessTo(video, targetSec, token);
+    };
+
+    if (isFinite(video.duration) && video.duration > 0 && video.readyState >= 1) {
+      // 已有元数据：稍延迟一帧再 seek，避免与 play() 抢状态
+      window.requestAnimationFrame(runJump);
+      return;
+    }
+
+    const onMeta = () => {
+      video.removeEventListener("loadedmetadata", onMeta);
+      video.removeEventListener("durationchange", onMeta);
+      // metadata 后必须再 play 一次（手机常见）
+      video.play().then(runJump).catch(runJump);
+    };
+    video.addEventListener("loadedmetadata", onMeta);
+    video.addEventListener("durationchange", onMeta);
+    window.setTimeout(() => {
+      if (token !== processSeekToken) return;
+      if (isFinite(video.duration) && video.duration > 0) onMeta();
+    }, 800);
   }
 
   function initChapters() {
@@ -1028,26 +1008,14 @@
     const media = cfg().media || {};
     const master = media.cloisonneVideo || "videos/cloisonne-process.mp4";
 
-    function bindProcessVideo() {
-      if (!video || video.dataset.lazyArmed === "1") return;
-      video.dataset.lazyArmed = "1";
+    if (video) {
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
+      video.setAttribute("x5-playsinline", "true");
+      video.setAttribute("x5-video-player-type", "h5");
+      video.playsInline = true;
+      // 预绑定源，但不在无手势时强制 play
       ensureProcessVideoSrc(video, master);
-    }
-
-    bindProcessVideo();
-    if (typeof IntersectionObserver !== "undefined" && video) {
-      const io = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((en) => en.isIntersecting)) {
-            bindProcessVideo();
-            io.disconnect();
-          }
-        },
-        { rootMargin: "320px 0px" }
-      );
-      io.observe(video);
     }
 
     if (bar) {
@@ -1062,12 +1030,13 @@
       bar.addEventListener("click", (e) => {
         const chip = e.target.closest(".chapter-chip");
         if (!chip) return;
+        e.preventDefault();
         const stepId = chip.getAttribute("data-step");
         const step = steps.find((s) => s.id === stepId);
         seekProcess(stepId);
         const at =
           step && typeof step.startSeconds === "number" ? `（${formatTimecode(step.startSeconds)}）` : "";
-        showToast(stepId === "full" ? `从片头播放${at}` : `正在跳到「${chip.textContent}」${at}`);
+        showToast(stepId === "full" ? `从片头播放${at}` : `跳到「${chip.textContent}」${at}`);
       });
     }
 
@@ -1076,7 +1045,6 @@
         const id = el.getAttribute("data-step");
         if (!id) return;
         seekProcess(id);
-        if (video) video.scrollIntoView({ behavior: "smooth", block: "center" });
       });
     });
   }
