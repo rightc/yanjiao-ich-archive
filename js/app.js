@@ -484,41 +484,22 @@
       return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1;
     }
 
-    function videoGain() {
-      const g = Number((cfg().media || {}).videoGain);
-      return Number.isFinite(g) ? Math.min(4, Math.max(1, g)) : 2.4;
-    }
-
-    function boostVideo(video) {
-      if (!video || video.dataset.gainBoosted === "1") return;
-      video.volume = videoVolume();
+    /** 只用原生音量，不走 MediaElementSource（手机上易导致有画面无声） */
+    function prepareVideoAudio(video) {
+      if (!video) return;
       video.muted = false;
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      try {
-        const ctx = new AC();
-        const src = ctx.createMediaElementSource(video);
-        const gain = ctx.createGain();
-        gain.gain.value = videoGain();
-        src.connect(gain);
-        gain.connect(ctx.destination);
-        video.dataset.gainBoosted = "1";
-        const resumeCtx = () => {
-          if (ctx.state === "suspended") ctx.resume().catch(() => {});
-        };
-        video.addEventListener("play", resumeCtx);
-        video.addEventListener("playing", resumeCtx);
-      } catch (e) {
-        /* 部分环境不支持 MediaElementSource，仍保留 volume=1 */
-        console.warn("[video-gain]", e);
-      }
+      video.removeAttribute("muted");
+      video.volume = videoVolume();
+      video.dataset.nativeAudio = "1";
     }
 
     function anyVideoPlaying() {
       return Array.prototype.some.call(document.querySelectorAll("video"), (v) => !v.paused && !v.ended);
     }
 
-    function onVideoPlay() {
+    function onVideoPlay(e) {
+      const video = e && e.target;
+      if (video && video.tagName === "VIDEO") prepareVideoAudio(video);
       if (resumeTimer) {
         window.clearTimeout(resumeTimer);
         resumeTimer = null;
@@ -528,21 +509,29 @@
 
     function onVideoStop() {
       if (resumeTimer) window.clearTimeout(resumeTimer);
-      // 章节 seek 会先 pause 再 play，短延迟避免配乐闪断闪开
+      // 章节切换会短暂停再播，延迟恢复配乐，避免闪断
       resumeTimer = window.setTimeout(() => {
         resumeTimer = null;
         if (anyVideoPlaying()) return;
         if (typeof window.resumeBgmAfterMedia === "function") window.resumeBgmAfterMedia();
-      }, 160);
+      }, 280);
     }
 
     document.querySelectorAll("video").forEach((video) => {
-      boostVideo(video);
+      prepareVideoAudio(video);
       video.addEventListener("play", onVideoPlay);
       video.addEventListener("playing", onVideoPlay);
+      video.addEventListener("volumechange", () => {
+        // 部分手机控件把 volume 拖到 0 后不恢复；保持至少可听
+        if (video.dataset.forceUnmute === "1" && video.muted) {
+          video.muted = false;
+        }
+      });
       video.addEventListener("pause", onVideoStop);
       video.addEventListener("ended", onVideoStop);
     });
+
+    window.prepareVideoAudio = prepareVideoAudio;
   }
 
   /* ===== 地图点位 ===== */
@@ -831,25 +820,37 @@
     video.setAttribute("x5-playsinline", "true");
     video.setAttribute("x5-video-player-type", "h5");
     video.playsInline = true;
-    // 用户点击工序：强制开声（避免无音轨旧片/自动播放留下的 muted）
-    video.muted = false;
-    video.removeAttribute("muted");
-    const vv = Number((cfg().media || {}).videoVolume);
-    video.volume = Number.isFinite(vv) ? Math.min(1, Math.max(0, vv)) : 1;
+    video.dataset.forceUnmute = "1";
+    if (typeof window.prepareVideoAudio === "function") window.prepareVideoAudio(video);
+    else {
+      video.muted = false;
+      video.removeAttribute("muted");
+      const vv = Number((cfg().media || {}).videoVolume);
+      video.volume = Number.isFinite(vv) ? Math.min(1, Math.max(0, vv)) : 1;
+    }
+    // 点工序立刻停配乐，避免盖过讲解
+    if (typeof window.pauseBgmForMedia === "function") window.pauseBgmForMedia();
 
     bindProcessVideoSrc(video, src);
 
     // 同步 play：保住用户手势（手机自动播放策略）
     const tryPlay = () => {
       if (token !== processPlayToken) return;
-      video.muted = false;
+      if (typeof window.prepareVideoAudio === "function") window.prepareVideoAudio(video);
+      else video.muted = false;
       try {
-        video.currentTime = 0;
+        if (video.readyState >= 1) video.currentTime = 0;
       } catch (e) {
         /* ignore */
       }
       const p = video.play();
-      if (p && typeof p.catch === "function") p.catch(() => {});
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {
+          // 个别机型 unmuted 自动播失败时，再试一次（仍优先有声）
+          video.muted = false;
+          video.play().catch(() => {});
+        });
+      }
     };
 
     tryPlay();

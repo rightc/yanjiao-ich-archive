@@ -3,8 +3,8 @@
  * 团队改数字、链接、文案时，优先只改这个文件
  */
 window.PROJECT_CONFIG = {
-  version: "2.2.49",
-  deliveryStatus: "正式交付 · 工序视频恢复音轨",
+  version: "2.2.50",
+  deliveryStatus: "正式交付 · 工序讲解有声",
 
   meta: {
     title: "燕郊非遗田野档案",
