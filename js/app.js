@@ -831,12 +831,18 @@
     video.setAttribute("x5-playsinline", "true");
     video.setAttribute("x5-video-player-type", "h5");
     video.playsInline = true;
+    // 用户点击工序：强制开声（避免无音轨旧片/自动播放留下的 muted）
+    video.muted = false;
+    video.removeAttribute("muted");
+    const vv = Number((cfg().media || {}).videoVolume);
+    video.volume = Number.isFinite(vv) ? Math.min(1, Math.max(0, vv)) : 1;
 
     bindProcessVideoSrc(video, src);
 
     // 同步 play：保住用户手势（手机自动播放策略）
     const tryPlay = () => {
       if (token !== processPlayToken) return;
+      video.muted = false;
       try {
         video.currentTime = 0;
       } catch (e) {

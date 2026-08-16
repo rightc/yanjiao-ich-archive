@@ -6,3 +6,6 @@ Thumbs.db
 *.local
 node_modules/
 .cache/
+# 本地源片备份，不上线
+/cloisonne-process.mp4
+/cloisonne-process.with-audio*.mp4
