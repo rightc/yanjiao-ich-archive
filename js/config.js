@@ -3,7 +3,7 @@
  * 团队改数字、链接、文案时，优先只改这个文件
  */
 window.PROJECT_CONFIG = {
-  version: "2.2.50",
+  version: "2.2.51",
   deliveryStatus: "正式交付 · 工序讲解有声",
 
   meta: {
@@ -29,7 +29,7 @@ window.PROJECT_CONFIG = {
     interviewCount: 9,
     routeCount: 1,
     reportWords: 4300,
-    documentaryDuration: "1 分 20 秒"
+    documentaryDuration: "2 分 05 秒"
   },
 
   reportAbstract: {
